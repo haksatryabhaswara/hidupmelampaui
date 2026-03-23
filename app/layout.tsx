@@ -36,7 +36,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-[var(--border)] bg-[var(--card)] py-8 text-center text-sm text-[var(--muted-foreground)]">
-            <p>© 2025 Hidup Melampaui. All rights reserved.</p>
+            <p>© 2026 Hidup Melampaui. All rights reserved.</p>
           </footer>
         </Providers>
       </body>

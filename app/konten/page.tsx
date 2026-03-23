@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart } from "lucide-react";
+import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart, Layers } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { allContents } from "@/lib/content-data";
@@ -28,16 +28,6 @@ export default function KontenPage() {
       (accessFilter === "Gratis" ? c.access === "free" : c.access !== "free");
     return matchSearch && matchCat && matchType && matchAccess;
   });
-
-  const handleContentClick = (contentId: string, access: string, e: React.MouseEvent) => {
-    if (access === "free") return; // navigate normally
-    if (!user) {
-      e.preventDefault();
-      openAuthModal(`/konten/${contentId}`);
-    }
-    // if login-required and user is logged in: navigate normally (link handles it)
-    // if paid: the detail page will handle purchase gate
-  };
 
   const accessBadge = (access: string) => {
     if (access === "free") return null;
@@ -182,7 +172,12 @@ export default function KontenPage() {
             {filtered.map((content) => (
               <div key={content.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col">
                 <div className="relative aspect-video bg-slate-800">
-                  {content.access === "free" && content.type === "video" && content.youtubeId ? (
+                  {content.isSteppedContent ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 to-blue-950 gap-3">
+                      <Layers className="w-12 h-12 text-indigo-300/70" />
+                      <p className="text-indigo-200/70 text-xs font-medium">{content.steps?.length ?? 0} Langkah</p>
+                    </div>
+                  ) : content.access === "free" && content.type === "video" && content.youtubeId ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${content.youtubeId}`}
                       title={content.title}
@@ -210,8 +205,12 @@ export default function KontenPage() {
                   )}
                   {accessBadge(content.access)}
                   <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                    {content.type === "video" ? <Video className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
-                    {content.type === "video" ? "Video" : "Artikel"}
+                    {content.isSteppedContent
+                      ? <><Layers className="w-3 h-3" /> Seri Bertahap</>
+                      : content.type === "video"
+                        ? <><Video className="w-3 h-3" /> Video</>
+                        : <><BookOpen className="w-3 h-3" /> Artikel</>
+                    }
                   </div>
                 </div>
                 <div className="p-5 flex-1 flex flex-col">

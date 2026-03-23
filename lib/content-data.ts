@@ -1,5 +1,19 @@
 export type ContentAccess = "free" | "login" | "paid";
 
+export type StepContent = {
+  id: string;
+  title: string;
+  description: string;
+  type: "video" | "article";
+  youtubeId: string | null;
+  /** free = anyone, login = must be signed in, paid = must purchase */
+  access: ContentAccess;
+  /** price in IDR — required when access === "paid" */
+  price?: number;
+  duration: string;
+  body?: string;
+};
+
 export type Content = {
   id: string;
   title: string;
@@ -16,6 +30,10 @@ export type Content = {
   duration: string;
   instructor: string;
   body?: string;
+  /** If true, this content contains sequential steps instead of a single body */
+  isSteppedContent?: boolean;
+  /** Ordered list of steps — each must be completed before the next unlocks */
+  steps?: StepContent[];
 };
 
 export const allContents: Content[] = [
@@ -254,5 +272,142 @@ Penelitian menunjukkan bahwa Emotional Intelligence (EQ) berkontribusi 80% terha
 3. **Motivation** — Dorongan internal yang kuat
 4. **Empathy** — Memahami emosi orang lain
 5. **Social Skills** — Mengelola hubungan dengan efektif`,
+  },
+
+  // ── Stepped / Series content ─────────────────────────────────────────────
+  {
+    id: "10",
+    title: "Transformasi Diri: Perjalanan 4 Langkah Menuju Hidup Bermakna",
+    description:
+      "Seri pembelajaran bertahap yang membawa Anda dari kesadaran diri menuju aksi nyata. Setiap langkah membuka langkah berikutnya — selesaikan satu untuk melanjutkan.",
+    category: "Pengembangan Diri",
+    type: "article",
+    youtubeId: null,
+    access: "free",
+    rating: 5.0,
+    students: 128,
+    duration: "4 langkah",
+    instructor: "Dr. Heru K. Wibawa",
+    isSteppedContent: true,
+    steps: [
+      {
+        id: "10-1",
+        title: "Langkah 1: Mengenal Diri — Peta Identitas Anda",
+        description:
+          "Sebelum berubah, Anda harus tahu siapa Anda. Langkah pertama adalah membuat peta identitas yang jujur.",
+        type: "article",
+        youtubeId: null,
+        access: "free",
+        duration: "10 menit baca",
+        body: `## Mengenal Diri adalah Fondasi Semua Perubahan
+
+Banyak orang memulai perjalanan transformasi dengan langsung mencari solusi baru — diet baru, kebiasaan baru, program baru. Tapi mereka melewati satu langkah krusial: mengenal diri sendiri.
+
+## Peta Identitas
+
+Peta identitas adalah gambaran jujur tentang siapa Anda saat ini — bukan siapa yang Anda inginkan, tapi siapa yang sesungguhnya ada sekarang.
+
+### Empat Dimensi Identitas
+
+1. **Nilai-nilai Inti** — Apa yang paling penting bagi Anda?
+2. **Pola Pikir** — Bagaimana Anda memandang masalah secara otomatis?
+3. **Emosi Dominan** — Perasaan apa yang paling sering muncul setiap hari?
+4. **Perilaku Default** — Apa yang Anda lakukan tanpa berpikir?
+
+## Latihan Hari Ini
+
+Ambil selembar kertas. Tulis nama Anda di tengah. Lalu tuliskan 5 kata yang paling menggambarkan diri Anda **sekarang** — bukan yang ideal, tapi yang nyata dan jujur.
+
+Tidak ada jawaban salah. Kejujuran ini adalah modal utama Anda.
+
+> "Kesadaran diri adalah langkah pertama menuju kebebasan sejati."
+> — Dr. Heru K. Wibawa`,
+      },
+      {
+        id: "10-2",
+        title: "Langkah 2: Memahami Pola Emosi Anda",
+        description:
+          "Pelajari bagaimana emosi Anda membentuk keputusan dan perilaku sehari-hari. Konten ini memerlukan akun gratis.",
+        type: "video",
+        youtubeId: "inpok4MKVLM",
+        access: "login",
+        duration: "25 menit",
+        body: `## Emosi Bukan Musuh
+
+Banyak dari kita diajarkan untuk menekan emosi — terutama yang negatif. Tapi emosi adalah data berharga, bukan gangguan.
+
+## Yang Akan Anda Pelajari
+
+- Mengenali trigger emosional pribadi Anda
+- Siklus stimulus → respons → kebiasaan
+- Teknik reframing emosi negatif menjadi energi konstruktif
+
+## Catatan Setelah Menonton
+
+Setelah selesai, identifikasi satu emosi yang paling sering "berkuasa" atas keputusan Anda tanpa izin Anda.`,
+      },
+      {
+        id: "10-3",
+        title: "Langkah 3: Merancang Strategi Perubahan",
+        description:
+          "Dari kesadaran menuju aksi. Rancang strategi transformasi yang realistis, terstruktur, dan terukur.",
+        type: "video",
+        youtubeId: "V42t0qVbCGI",
+        access: "paid",
+        price: 79000,
+        duration: "35 menit",
+        body: `## Strategi, Bukan Sekadar Semangat
+
+Semangat itu penting, tapi tidak cukup. Yang membedakan orang yang benar-benar berubah dengan yang tidak adalah sistem — bukan motivasi sesaat.
+
+## Yang Akan Anda Bangun dalam Langkah Ini
+
+- Goal framework yang realistis dan berbasis nilai
+- Sistem pengambilan keputusan yang konsisten
+- Rencana aksi 90 hari yang terukur
+
+## Mengapa Kebanyakan Strategi Gagal?
+
+Karena dirancang dari ekspektasi, bukan dari realita diri. Langkah ini akan membalikkan itu.`,
+      },
+      {
+        id: "10-4",
+        title: "Langkah 4: Membangun Momentum Jangka Panjang",
+        description:
+          "Perubahan sejati bukan sprint, melainkan maraton. Pelajari cara menjaga api transformasi tetap menyala.",
+        type: "article",
+        youtubeId: null,
+        access: "free",
+        duration: "12 menit baca",
+        body: `## Momentum adalah Segalanya
+
+Setelah Anda memiliki kesadaran diri, memahami emosi, dan merancang strategi — tantangan sesungguhnya baru dimulai: mempertahankan momentum di tengah kehidupan nyata.
+
+## Tiga Musuh Momentum
+
+1. **Perfeksionisme** — "Kalau tidak sempurna, lebih baik tidak usah."
+2. **Perbandingan** — "Orang lain sudah jauh lebih maju dari saya."
+3. **Ketidaksabaran** — "Sudah seminggu tapi belum ada perubahan."
+
+Ketiga musuh ini ada di dalam kepala Anda — bukan di luar.
+
+## Sistem Perayaan Kecil
+
+Otak Anda butuh sinyal positif untuk terus bergerak. Setiap kali Anda menyelesaikan satu langkah kecil, rayakan — sekecil apapun itu.
+
+## Komitmen Terakhir
+
+Anda telah menyelesaikan seluruh seri ini. Ini bukan akhir — ini adalah *awal yang sesungguhnya*.
+
+Perjalanan transformasi diri bukan tentang mencapai kesempurnaan. Ini tentang terus bergerak, satu langkah setiap harinya.
+
+---
+
+Selamat. Sertifikat Anda sudah menunggu.
+
+> "Konsistensi kecil yang dilakukan terus-menerus akan selalu mengalahkan intensitas besar yang sporadis."
+> — Dr. Heru K. Wibawa`,
+      },
+    ],
   },
 ];
