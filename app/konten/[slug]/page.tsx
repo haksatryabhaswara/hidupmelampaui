@@ -10,16 +10,14 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { allContents, type StepContent } from "@/lib/content-data";
 import { Certificate } from "@/components/certificate";
-import {
-  markCompleted, getCompletedSet, markPaid, isPaid, getPaidSet,
-} from "@/lib/progress";
+import { useProgress } from "@/lib/progress";
 
 // ─── Minimal YouTube IFrame API types ────────────────────────────────────────
 declare global {
   interface Window {
     YT?: {
       Player: new (
-        id: string,
+        id: string | HTMLElement,
         opts: {
           videoId: string;
           playerVars?: Record<string, string | number>;
@@ -37,7 +35,8 @@ declare global {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatRupiah(n: number) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  // Avoid Intl.NumberFormat locale differences between Node.js (small-icu) and browser.
+  return "Rp\u00A0" + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function renderBody(body: string) {
@@ -66,11 +65,17 @@ function useYouTubePlayer(
   useEffect(() => {
     if (!youtubeId || !active) return;
     let player: { destroy(): void } | null = null;
+    // Create a child slot for YT to replace with its iframe.
+    // This keeps the parent div (managed by React) untouched, preventing
+    // removeChild errors when React reconciles or the component unmounts.
+    let slot: HTMLDivElement | null = null;
 
     function create() {
-      const el = document.getElementById(divId);
-      if (!el || !window.YT?.Player) return;
-      player = new window.YT.Player(divId, {
+      const container = document.getElementById(divId);
+      if (!container || !window.YT?.Player) return;
+      slot = document.createElement("div");
+      container.appendChild(slot);
+      player = new window.YT.Player(slot, {
         videoId: youtubeId!,
         playerVars: { rel: 0, modestbranding: 1 },
         events: {
@@ -90,7 +95,12 @@ function useYouTubePlayer(
         document.head.appendChild(tag);
       }
     }
-    return () => { player?.destroy(); };
+    return () => {
+      // player.destroy() internally calls removeChild on its iframe.
+      // If the parent was already removed by React, that throws — catch it.
+      try { player?.destroy(); } catch { /* detached node — safe to ignore */ }
+      try { if (slot?.parentNode) slot.parentNode.removeChild(slot); } catch { /* already detached */ }
+    };
   }, [youtubeId, divId, active]);
 }
 
@@ -165,17 +175,17 @@ function ArticleSection({ body, itemId, onComplete, alreadyDone }: {
 }
 
 // ─── AccessGate ───────────────────────────────────────────────────────────────
-function AccessGate({ step, user, openAuthModal, parentId }: {
+function AccessGate({ step, user, openAuthModal, parentSlug }: {
   step: StepContent;
   user: { email?: string | null; uid?: string } | null;
   openAuthModal: (redirect?: string) => void;
-  parentId: string;
+  parentSlug: string;
 }) {
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   const handleBuy = async () => {
-    if (!user?.email) { openAuthModal(`/konten/${parentId}`); return; }
+    if (!user?.email) { openAuthModal(`/konten/${parentSlug}`); return; }
     setPurchasing(true);
     setPurchaseError(null);
     try {
@@ -188,8 +198,8 @@ function AccessGate({ step, user, openAuthModal, parentId }: {
           price: step.price ?? 0,
           userId: (user as { uid: string }).uid,
           userEmail: user.email,
-          successRedirectUrl: `${window.location.origin}/konten/${parentId}?paidStep=${step.id}`,
-          failureRedirectUrl: `${window.location.origin}/konten/${parentId}?payment=failed`,
+          successRedirectUrl: `${window.location.origin}/konten/${parentSlug}?paidStep=${step.id}`,
+          failureRedirectUrl: `${window.location.origin}/konten/${parentSlug}?payment=failed`,
         }),
       });
       if (!res.ok) {
@@ -212,7 +222,7 @@ function AccessGate({ step, user, openAuthModal, parentId }: {
         <h2 className="text-xl font-bold text-[var(--foreground)]">Login Diperlukan</h2>
         <p className="text-[var(--muted-foreground)] text-sm">Langkah ini gratis — cukup login atau daftar akun.</p>
         <button
-          onClick={() => openAuthModal(`/konten/${parentId}`)}
+          onClick={() => openAuthModal(`/konten/${parentSlug}`)}
           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
         >
           Masuk / Daftar Gratis
@@ -229,7 +239,7 @@ function AccessGate({ step, user, openAuthModal, parentId }: {
       {step.price && <p className="text-3xl font-bold text-amber-600">{formatRupiah(step.price)}</p>}
       {purchaseError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">{purchaseError}</p>}
       {!user ? (
-        <button onClick={() => openAuthModal(`/konten/${parentId}`)}
+        <button onClick={() => openAuthModal(`/konten/${parentSlug}`)}
           className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-bold px-6 py-2.5 rounded-xl transition-colors">
           <Lock className="w-4 h-4" /> Login untuk Membeli
         </button>
@@ -275,30 +285,23 @@ export default function KontenDetailPage() {
   const searchParams = useSearchParams();
   const { user, openAuthModal, loading } = useAuth();
 
-  const id = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
-  const content = allContents.find((c) => c.id === id);
+  const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const content = allContents.find((c) => c.slug === slug);
+
+  // Progress backed by Firestore (authenticated) or localStorage (guest)
+  const { completed, paid, progressLoading, markCompleted, markPaid } = useProgress(user);
 
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const paymentStatus = searchParams?.get("payment");
 
-  // Progress (loaded from localStorage on client)
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [paid, setPaid] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setCompleted(getCompletedSet());
-    setPaid(getPaidSet());
-  }, []);
-
   // Persist paid step from ?paidStep= URL param
   useEffect(() => {
     const paidStep = searchParams?.get("paidStep");
-    if (paidStep) {
-      markPaid(paidStep);
-      setPaid((prev) => new Set([...prev, paidStep]));
-    }
-  }, [searchParams]);
+    if (paidStep) void markPaid(paidStep);
+  }, [searchParams, markPaid]);
+
+  // Use the stable numeric id for progress; slug is only for URLs
 
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [showCertificate, setShowCertificate] = useState(false);
@@ -311,14 +314,13 @@ export default function KontenDetailPage() {
 
   useEffect(() => {
     if (!loading && !user && content && !content.isSteppedContent && content.access !== "free") {
-      openAuthModal(`/konten/${id}`);
+      openAuthModal(`/konten/${slug}`);
     }
-  }, [loading, user, content, id, openAuthModal]);
+  }, [loading, user, content, slug, openAuthModal]);
 
   const handleMarkDone = useCallback((itemId: string) => {
-    markCompleted(itemId);
-    setCompleted((prev) => new Set([...prev, itemId]));
-  }, []);
+    void markCompleted(itemId);
+  }, [markCompleted]);
 
   if (!content) {
     return (
@@ -347,7 +349,7 @@ export default function KontenDetailPage() {
     const stepAccessBlocked = (step: StepContent): boolean => {
       if (step.access === "free") return false;
       if (step.access === "login") return !user;
-      if (step.access === "paid") return !paid.has(step.id) && !isPaid(step.id);
+      if (step.access === "paid") return !paid.has(step.id);
       return false;
     };
 
@@ -473,75 +475,83 @@ export default function KontenDetailPage() {
               </div>
 
               <div className="p-6">
-                {completed.has(activeStep.id) && (
-                  <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 mb-6 text-emerald-700 dark:text-emerald-300 text-sm">
-                    <CheckCircle className="w-4 h-4 flex-shrink-0" /> Anda sudah menyelesaikan langkah ini.
-                  </div>
-                )}
-
-                {stepPrevLocked(stepIndex) ? (
-                  <div className="text-center py-12 space-y-4">
-                    <Lock className="w-12 h-12 text-[var(--muted-foreground)] mx-auto" />
-                    <h3 className="font-bold text-[var(--foreground)]">Langkah Terkunci</h3>
-                    <p className="text-[var(--muted-foreground)] text-sm max-w-xs mx-auto">
-                      Selesaikan <strong>{steps[stepIndex - 1].title}</strong> terlebih dahulu.
-                    </p>
-                    <button
-                      onClick={() => setActiveStepId(steps[stepIndex - 1].id)}
-                      className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline"
-                    >
-                      <ArrowLeft className="w-4 h-4" /> Kembali ke langkah sebelumnya
-                    </button>
-                  </div>
-                ) : stepAccessBlocked(activeStep) ? (
-                  <AccessGate step={activeStep} user={user} openAuthModal={openAuthModal} parentId={id} />
-                ) : activeStep.type === "video" && activeStep.youtubeId ? (
-                  <div className="space-y-4">
-                    <VideoSection
-                      youtubeId={activeStep.youtubeId}
-                      itemId={activeStep.id}
-                      alreadyDone={completed.has(activeStep.id)}
-                      onComplete={() => handleMarkDone(activeStep.id)}
-                    />
-                    {!completed.has(activeStep.id) && (
-                      <>
-                        <p className="text-xs text-[var(--muted-foreground)] text-center">
-                          Video otomatis ditandai selesai saat berakhir, atau tandai manual:
-                        </p>
-                        <div className="flex justify-center">
-                          <button
-                            onClick={() => handleMarkDone(activeStep.id)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--foreground)] transition-colors"
-                          >
-                            <CheckCircle className="w-4 h-4" /> Tandai sudah ditonton
-                          </button>
-                        </div>
-                      </>
-                    )}
-                    {activeStep.body && (
-                      <div className="prose prose-sm max-w-none pt-4 border-t border-[var(--border)]">
-                        {renderBody(activeStep.body)}
-                      </div>
-                    )}
+                {progressLoading ? (
+                  <div className="py-16 flex justify-center">
+                    <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : (
-                  <ArticleSection
-                    body={activeStep.body ?? ""}
-                    itemId={activeStep.id}
-                    alreadyDone={completed.has(activeStep.id)}
-                    onComplete={() => handleMarkDone(activeStep.id)}
-                  />
-                )}
+                  <>
+                    {completed.has(activeStep.id) && (
+                      <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 mb-6 text-emerald-700 dark:text-emerald-300 text-sm">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" /> Anda sudah menyelesaikan langkah ini.
+                      </div>
+                    )}
 
-                {completed.has(activeStep.id) && stepIndex < steps.length - 1 && (
-                  <div className="mt-8 flex justify-end">
-                    <button
-                      onClick={() => setActiveStepId(steps[stepIndex + 1].id)}
-                      className="flex items-center gap-2 bg-[var(--primary)] hover:opacity-90 text-white font-semibold px-5 py-2.5 rounded-xl transition-opacity text-sm"
-                    >
-                      Langkah Berikutnya <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                    {stepPrevLocked(stepIndex) ? (
+                      <div className="text-center py-12 space-y-4">
+                        <Lock className="w-12 h-12 text-[var(--muted-foreground)] mx-auto" />
+                        <h3 className="font-bold text-[var(--foreground)]">Langkah Terkunci</h3>
+                        <p className="text-[var(--muted-foreground)] text-sm max-w-xs mx-auto">
+                          Selesaikan <strong>{steps[stepIndex - 1].title}</strong> terlebih dahulu.
+                        </p>
+                        <button
+                          onClick={() => setActiveStepId(steps[stepIndex - 1].id)}
+                          className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline"
+                        >
+                          <ArrowLeft className="w-4 h-4" /> Kembali ke langkah sebelumnya
+                        </button>
+                      </div>
+                    ) : stepAccessBlocked(activeStep) ? (
+                      <AccessGate step={activeStep} user={user} openAuthModal={openAuthModal} parentSlug={slug} />
+                    ) : activeStep.type === "video" && activeStep.youtubeId ? (
+                      <div className="space-y-4">
+                        <VideoSection
+                          youtubeId={activeStep.youtubeId}
+                          itemId={activeStep.id}
+                          alreadyDone={completed.has(activeStep.id)}
+                          onComplete={() => handleMarkDone(activeStep.id)}
+                        />
+                        {!completed.has(activeStep.id) && (
+                          <>
+                            <p className="text-xs text-[var(--muted-foreground)] text-center">
+                              Video otomatis ditandai selesai saat berakhir, atau tandai manual:
+                            </p>
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleMarkDone(activeStep.id)}
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--foreground)] transition-colors"
+                              >
+                                <CheckCircle className="w-4 h-4" /> Tandai sudah ditonton
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        {activeStep.body && (
+                          <div className="prose prose-sm max-w-none pt-4 border-t border-[var(--border)]">
+                            {renderBody(activeStep.body)}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <ArticleSection
+                        body={activeStep.body ?? ""}
+                        itemId={activeStep.id}
+                        alreadyDone={completed.has(activeStep.id)}
+                        onComplete={() => handleMarkDone(activeStep.id)}
+                      />
+                    )}
+
+                    {completed.has(activeStep.id) && stepIndex < steps.length - 1 && (
+                      <div className="mt-8 flex justify-end">
+                        <button
+                          onClick={() => setActiveStepId(steps[stepIndex + 1].id)}
+                          className="flex items-center gap-2 bg-[var(--primary)] hover:opacity-90 text-white font-semibold px-5 py-2.5 rounded-xl transition-opacity text-sm"
+                        >
+                          Langkah Berikutnya <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -563,7 +573,7 @@ export default function KontenDetailPage() {
   const handleSingleComplete = () => handleMarkDone(content.id);
 
   const handlePurchase = async () => {
-    if (!user?.email) { openAuthModal(`/konten/${id}`); return; }
+    if (!user?.email) { openAuthModal(`/konten/${slug}`); return; }
     setPurchasing(true);
     setPurchaseError(null);
     try {
@@ -576,6 +586,7 @@ export default function KontenDetailPage() {
           price: content.price ?? 0,
           userId: (user as { uid: string }).uid,
           userEmail: user.email,
+          contentSlug: content.slug,
         }),
       });
       if (!res.ok) {
@@ -706,7 +717,7 @@ export default function KontenDetailPage() {
                 <Lock className="w-10 h-10 text-blue-500 mx-auto" />
                 <h2 className="text-xl font-bold text-[var(--foreground)]">Login Diperlukan</h2>
                 <p className="text-[var(--muted-foreground)] text-sm">Konten ini gratis — Anda hanya perlu login atau daftar.</p>
-                <button onClick={() => openAuthModal(`/konten/${id}`)}
+                <button onClick={() => openAuthModal(`/konten/${slug}`)}
                   className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl transition-colors">
                   Masuk / Daftar Gratis
                 </button>

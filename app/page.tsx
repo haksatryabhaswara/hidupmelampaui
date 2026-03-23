@@ -28,6 +28,7 @@ import {
 const dummyContents = [
   {
     id: "1",
+    slug: "fondasi-stabilitas-emosi",
     title: "Fondasi Stabilitas Emosi: Membangun Ketenangan di Tengah Tekanan",
     description: "Pelajari teknik-teknik praktis untuk mengelola emosi dan membangun ketahanan mental dalam kehidupan sehari-hari.",
     type: "video",
@@ -41,6 +42,7 @@ const dummyContents = [
   },
   {
     id: "2",
+    slug: "kepemimpinan-mikro",
     title: "Kepemimpinan Mikro: Memimpin Diri Sebelum Memimpin Tim",
     description: "Framework kepemimpinan berbasis nilai yang membantu Anda menjadi pemimpin yang matang secara emosional dan spiritual.",
     type: "video",
@@ -54,6 +56,7 @@ const dummyContents = [
   },
   {
     id: "3",
+    slug: "integrasi-spiritual-kehidupan-profesional",
     title: "Integrasi Spiritual dalam Kehidupan Profesional",
     description: "Bagaimana nilai-nilai spiritual menjadi kompas dalam pengambilan keputusan dan membangun karier yang bermakna.",
     type: "article",
@@ -67,6 +70,7 @@ const dummyContents = [
   },
   {
     id: "4",
+    slug: "gen-z-stabilitas-era-vuca",
     title: "Gen Z & Stabilitas di Era VUCA: Panduan Bertahan dan Bertumbuh",
     description: "Strategi spesifik bagi generasi Z untuk membangun fondasi hidup yang kokoh di tengah ketidakpastian global.",
     type: "video",
@@ -80,6 +84,7 @@ const dummyContents = [
   },
   {
     id: "5",
+    slug: "arsitektur-kehidupan",
     title: "Arsitektur Kehidupan: Merancang Hidup yang Bermakna",
     description: "Panduan komprehensif untuk merancang blue print kehidupan yang stabil, produktif, dan berdampak bagi orang sekitar.",
     type: "article",
@@ -93,6 +98,7 @@ const dummyContents = [
   },
   {
     id: "6",
+    slug: "corporate-human-architecture",
     title: "Corporate Human Architecture: Membangun Tim yang Stabil",
     description: "Pendekatan strategis untuk membangun stabilitas manusia di dalam organisasi — dari onboarding hingga leadership pipeline.",
     type: "video",
@@ -166,25 +172,26 @@ function HeroSection() {
               </div>
             </div>
           </div>
-          <div className="lg:flex justify-end hidden">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-sm space-y-6">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-white/90 italic leading-relaxed">
-                &ldquo;Program ini mengubah cara saya menjalani hidup. Saya menemukan kejelasan arah dan stabilitas yang selama ini saya cari.&rdquo;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center font-bold">
-                  R
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Rina S.</p>
-                  <p className="text-blue-200 text-xs">Profesional Muda, Jakarta</p>
-                </div>
-              </div>
+          <div className="hidden lg:flex flex-col gap-3 w-full">
+            <div className="aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+              <iframe
+                src="https://www.youtube.com/embed/BYoBn5aIDjE"
+                title="Hidup Melampaui — Video 1"
+                className="w-full h-full"
+                allowFullScreen
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+            <div className="aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+              <iframe
+                src="https://www.youtube.com/embed/SXpinqjkYx0"
+                title="Hidup Melampaui — Video 2"
+                className="w-full h-full"
+                allowFullScreen
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
             </div>
           </div>
         </div>
@@ -380,7 +387,7 @@ function ContentCard({ content }: { content: typeof dummyContents[0] }) {
           <span>{content.duration}</span>
         </div>
         <Link
-          href={content.isPremium ? "/auth/daftar" : `/konten/${content.id}`}
+          href={content.isPremium ? "/auth/daftar" : `/konten/${content.slug}`}
           className={`w-full text-center py-2 rounded-lg text-sm font-medium transition-colors ${
             content.isPremium
               ? "bg-amber-500 hover:bg-amber-400 text-white"
@@ -704,22 +711,22 @@ function KonselingSection() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama</label>
-                  <input type="text" placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <input type="text" placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama Akhir</label>
-                  <input type="text" placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <input type="text" placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Email <span className="text-red-500">*</span></label>
-                <input type="email" placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                <input type="email" placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Pesan <span className="text-red-500">*</span></label>
-                <textarea rows={4} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                <textarea rows={4} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" suppressHydrationWarning />
               </div>
-              <button type="submit" className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+              <button type="submit" className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" suppressHydrationWarning>
                 <Mail className="w-4 h-4" /> Kirim Pesan
               </button>
             </form>
@@ -746,8 +753,9 @@ function NewsletterSection() {
             type="text"
             placeholder="Masukkan nama Anda"
             className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+            suppressHydrationWarning
           />
-          <button type="submit" className="bg-[var(--primary)] text-white font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap">
+          <button type="submit" className="bg-[var(--primary)] text-white font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap" suppressHydrationWarning>
             Kirim
           </button>
         </form>

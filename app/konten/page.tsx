@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart, Layers } from "lucide-react";
@@ -47,7 +47,7 @@ export default function KontenPage() {
     if (content.access === "free") {
       return (
         <Link
-          href={`/konten/${content.id}`}
+          href={`/konten/${content.slug}`}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] hover:opacity-90 text-white transition-opacity"
         >
           <Play className="w-3 h-3" /> Mulai Belajar
@@ -58,7 +58,7 @@ export default function KontenPage() {
       if (!user) {
         return (
           <button
-            onClick={() => openAuthModal(`/konten/${content.id}`)}
+            onClick={() => openAuthModal(`/konten/${content.slug}`)}
             className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
           >
             <Lock className="w-3 h-3" /> Login untuk Akses
@@ -67,7 +67,7 @@ export default function KontenPage() {
       }
       return (
         <Link
-          href={`/konten/${content.id}`}
+          href={`/konten/${content.slug}`}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] hover:opacity-90 text-white transition-opacity"
         >
           <Play className="w-3 h-3" /> Mulai Belajar
@@ -78,7 +78,7 @@ export default function KontenPage() {
     if (!user) {
       return (
         <button
-          onClick={() => openAuthModal(`/konten/${content.id}`)}
+          onClick={() => openAuthModal(`/konten/${content.slug}`)}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-400 text-white transition-colors"
         >
           <Lock className="w-3 h-3" /> {content.price ? formatRupiah(content.price) : "Premium"}
@@ -87,7 +87,7 @@ export default function KontenPage() {
     }
     return (
       <Link
-        href={`/konten/${content.id}`}
+        href={`/konten/${content.slug}`}
         className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-400 text-white transition-colors"
       >
         <ShoppingCart className="w-3 h-3" /> {content.price ? formatRupiah(content.price) : "Beli Sekarang"}

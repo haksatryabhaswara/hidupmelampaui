@@ -76,6 +76,7 @@ export function Navbar() {
               onClick={toggleTheme}
               className="p-2 rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
               aria-label="Toggle theme"
+              suppressHydrationWarning
             >
               {isClient && theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>

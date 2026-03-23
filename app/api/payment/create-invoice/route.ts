@@ -9,9 +9,13 @@ export async function POST(request: NextRequest) {
       price: number;
       userId: string;
       userEmail: string;
+      contentSlug?: string;
+      successRedirectUrl?: string;
+      failureRedirectUrl?: string;
     };
 
-    const { contentId, contentTitle, price, userId, userEmail } = body;
+    const { contentId, contentTitle, price, userId, userEmail, contentSlug, successRedirectUrl, failureRedirectUrl } = body;
+    const urlSlug = contentSlug ?? contentId;
 
     if (!contentId || !price || !userId || !userEmail) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
@@ -25,8 +29,8 @@ export async function POST(request: NextRequest) {
       amount: price,
       payerEmail: userEmail,
       description: `Akses Konten: ${contentTitle}`,
-      successRedirectUrl: `${xenditConfig.baseUrl}/konten/${contentId}?payment=success`,
-      failureRedirectUrl: `${xenditConfig.baseUrl}/konten/${contentId}?payment=failed`,
+      successRedirectUrl: successRedirectUrl ?? `${xenditConfig.baseUrl}/konten/${urlSlug}?payment=success`,
+      failureRedirectUrl: failureRedirectUrl ?? `${xenditConfig.baseUrl}/konten/${urlSlug}?payment=failed`,
     });
 
     return NextResponse.json({

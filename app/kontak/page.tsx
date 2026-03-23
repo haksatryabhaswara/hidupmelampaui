@@ -84,24 +84,24 @@ export default function KontakPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama Anda" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <input type="text" placeholder="Nama Anda" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama Akhir</label>
-                    <input type="text" placeholder="Nama belakang" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <input type="text" placeholder="Nama belakang" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Email <span className="text-red-500">*</span></label>
-                  <input type="email" placeholder="email@anda.com" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <input type="email" placeholder="email@anda.com" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nomor WhatsApp</label>
-                  <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Topik</label>
-                  <select className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]">
+                  <select className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning>
                     <option value="">Pilih topik</option>
                     <option>Program Individu</option>
                     <option>Program Corporate</option>
@@ -112,9 +112,9 @@ export default function KontakPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Pesan <span className="text-red-500">*</span></label>
-                  <textarea rows={5} placeholder="Ceritakan kebutuhan atau pertanyaan Anda..." required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                  <textarea rows={5} placeholder="Ceritakan kebutuhan atau pertanyaan Anda..." required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" suppressHydrationWarning />
                 </div>
-                <button type="submit" className="w-full bg-[var(--primary)] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <button type="submit" className="w-full bg-[var(--primary)] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" suppressHydrationWarning>
                   <Mail className="w-4 h-4" /> Kirim Pesan
                 </button>
               </form>

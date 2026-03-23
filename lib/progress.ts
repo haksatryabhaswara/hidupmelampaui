@@ -1,68 +1,147 @@
-const STORAGE_KEY = "hidup_progress_v1";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import type { User } from "firebase/auth";
+import { doc, getDoc, updateDoc, setDoc, arrayUnion } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ProgressStore = {
-  completed: Record<string, string>; // id -> ISO date string
-  paid: string[];                    // paid content/step IDs
+  completed: Record<string, string>; // contentId / stepId → ISO date
+  paid: string[];
 };
 
-function load(): ProgressStore {
+// ─── localStorage (guest fallback) ───────────────────────────────────────────
+
+const LOCAL_KEY = "hidup_progress_v1";
+
+function localLoad(): ProgressStore {
   if (typeof window === "undefined") return { completed: {}, paid: [] };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(LOCAL_KEY);
     if (!raw) return { completed: {}, paid: [] };
-    const data = JSON.parse(raw) as Partial<ProgressStore>;
-    return { completed: data.completed ?? {}, paid: data.paid ?? [] };
+    const d = JSON.parse(raw) as Partial<ProgressStore>;
+    return { completed: d.completed ?? {}, paid: d.paid ?? [] };
   } catch {
     return { completed: {}, paid: [] };
   }
 }
 
-function save(data: ProgressStore): void {
+function localSave(data: ProgressStore): void {
   if (typeof window === "undefined") return;
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); } catch {}
 }
 
-/** Mark a content/step as completed. Returns the completion Date. */
-export function markCompleted(id: string): Date {
-  const data = load();
-  if (!data.completed[id]) {
-    data.completed[id] = new Date().toISOString();
-    save(data);
+function localMarkCompleted(id: string): void {
+  const d = localLoad();
+  if (!d.completed[id]) { d.completed[id] = new Date().toISOString(); localSave(d); }
+}
+
+function localMarkPaid(id: string): void {
+  const d = localLoad();
+  if (!d.paid.includes(id)) { d.paid.push(id); localSave(d); }
+}
+
+// ─── Firestore (authenticated users) ─────────────────────────────────────────
+
+function progressRef(uid: string) {
+  return doc(db, "progress", uid);
+}
+
+async function fsLoad(uid: string): Promise<ProgressStore> {
+  try {
+    const snap = await getDoc(progressRef(uid));
+    if (snap.exists()) {
+      const d = snap.data() as Partial<ProgressStore>;
+      return { completed: d.completed ?? {}, paid: d.paid ?? [] };
+    }
+    // First sign-in: migrate any existing localStorage data into Firestore.
+    const local = localLoad();
+    await setDoc(progressRef(uid), local);
+    return local;
+  } catch {
+    return { completed: {}, paid: [] };
   }
-  return new Date(data.completed[id]);
 }
 
-/** Check if a content/step is completed. */
-export function isCompleted(id: string): boolean {
-  return !!load().completed[id];
-}
-
-/** Get the completion date or null. */
-export function getCompletionDate(id: string): Date | null {
-  const d = load().completed[id];
-  return d ? new Date(d) : null;
-}
-
-/** Mark a content/step as paid (client-side demo only). */
-export function markPaid(id: string): void {
-  const data = load();
-  if (!data.paid.includes(id)) {
-    data.paid.push(id);
-    save(data);
+async function fsMarkCompleted(uid: string, id: string): Promise<void> {
+  const now = new Date().toISOString();
+  try {
+    await updateDoc(progressRef(uid), { [`completed.${id}`]: now });
+  } catch {
+    // Document didn't exist yet — create it.
+    await setDoc(progressRef(uid), { completed: { [id]: now }, paid: [] });
   }
 }
 
-/** Check if a content/step has been paid (client-side demo only). */
-export function isPaid(id: string): boolean {
-  return load().paid.includes(id);
+async function fsMarkPaid(uid: string, id: string): Promise<void> {
+  try {
+    await updateDoc(progressRef(uid), { paid: arrayUnion(id) });
+  } catch {
+    await setDoc(progressRef(uid), { completed: {}, paid: [id] });
+  }
 }
 
-/** Get all completed IDs as a Set. */
-export function getCompletedSet(): Set<string> {
-  return new Set(Object.keys(load().completed));
-}
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
-/** Get all paid IDs as a Set. */
-export function getPaidSet(): Set<string> {
-  return new Set(load().paid);
+type ProgressState = {
+  completed: Set<string>;
+  paid: Set<string>;
+  loading: boolean;
+};
+
+/**
+ * Manages progress state backed by Firestore for authenticated users,
+ * falling back to localStorage for guests. Migrates localStorage data to
+ * Firestore automatically on first sign-in.
+ */
+export function useProgress(user: User | null) {
+  const [state, setState] = useState<ProgressState>(
+    () => ({ completed: new Set(), paid: new Set(), loading: true }),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const data = user ? await fsLoad(user.uid) : localLoad();
+      if (!cancelled) {
+        setState({
+          completed: new Set(Object.keys(data.completed)),
+          paid: new Set(data.paid),
+          loading: false,
+        });
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const markCompleted = useCallback(async (id: string) => {
+    // Optimistic update so UI reflects immediately.
+    setState(prev => ({ ...prev, completed: new Set([...prev.completed, id]) }));
+    if (user) {
+      await fsMarkCompleted(user.uid, id);
+    } else {
+      localMarkCompleted(id);
+    }
+  }, [user]);
+
+  const markPaid = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, paid: new Set([...prev.paid, id]) }));
+    if (user) {
+      await fsMarkPaid(user.uid, id);
+    } else {
+      localMarkPaid(id);
+    }
+  }, [user]);
+
+  return {
+    completed: state.completed,
+    paid: state.paid,
+    progressLoading: state.loading,
+    markCompleted,
+    markPaid,
+  };
 }

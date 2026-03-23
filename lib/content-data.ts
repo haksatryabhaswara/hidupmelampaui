@@ -16,6 +16,8 @@ export type StepContent = {
 
 export type Content = {
   id: string;
+  /** URL-friendly slug used for routing: /konten/[slug] */
+  slug: string;
   title: string;
   description: string;
   category: string;
@@ -39,6 +41,7 @@ export type Content = {
 export const allContents: Content[] = [
   {
     id: "1",
+    slug: "fondasi-stabilitas-emosi",
     title: "Fondasi Stabilitas Emosi: Membangun Ketenangan di Tengah Tekanan",
     description: "Pelajari teknik-teknik praktis untuk mengelola emosi dan membangun ketahanan mental.",
     category: "Pengembangan Diri",
@@ -69,6 +72,7 @@ Dalam dunia yang penuh tekanan dan ketidakpastian, kemampuan untuk tetap stabil 
   },
   {
     id: "2",
+    slug: "kepemimpinan-mikro",
     title: "Kepemimpinan Mikro: Memimpin Diri Sebelum Memimpin Tim",
     description: "Prinsip-prinsip kepemimpinan yang dimulai dari dalam diri — fondasi pemimpin sejati.",
     category: "Kepemimpinan",
@@ -93,6 +97,7 @@ Sebelum Anda bisa memimpin orang lain, Anda harus bisa memimpin diri sendiri. In
   },
   {
     id: "3",
+    slug: "integrasi-spiritual-kehidupan-profesional",
     title: "Integrasi Spiritual dalam Kehidupan Profesional",
     description: "Bagaimana nilai-nilai spiritual menjadi kompas dalam pengambilan keputusan.",
     category: "Spiritual",
@@ -125,6 +130,7 @@ Ketika pekerjaan Anda adalah bentuk pelayanan, bukan sekadar transaksi, Anda aka
   },
   {
     id: "4",
+    slug: "gen-z-stabilitas-era-vuca",
     title: "Gen Z & Stabilitas di Era VUCA: Panduan Bertahan dan Bertumbuh",
     description: "Strategi khusus bagi Generasi Z untuk membangun fondasi yang kuat di tengah dunia yang cepat berubah.",
     category: "Gen Z",
@@ -149,6 +155,7 @@ Gen Z menghadapi tekanan unik: dunia digital yang penuh distraksi, ekspektasi so
   },
   {
     id: "5",
+    slug: "arsitektur-kehidupan",
     title: "Arsitektur Kehidupan: Merancang Hidup yang Bermakna",
     description: "Framework sistematis untuk merancang seluruh dimensi kehidupan Anda dari visi hingga aksi.",
     category: "Pengembangan Diri",
@@ -177,6 +184,7 @@ Mulai dengan pertanyaan: "Bagaimana saya ingin dikenang 50 tahun dari sekarang?"
   },
   {
     id: "6",
+    slug: "corporate-human-architecture",
     title: "Corporate Human Architecture: Membangun Tim yang Stabil",
     description: "Pendekatan integratif untuk membangun stabilitas dan kedewasaan manusia di dalam organisasi.",
     category: "Korporat",
@@ -201,6 +209,7 @@ Turnover tinggi, burnout, konflik antar generasi, dan kehilangan makna kerja —
   },
   {
     id: "7",
+    slug: "manajemen-konflik-keluarga-kerja",
     title: "Manajemen Konflik dalam Keluarga dan Tempat Kerja",
     description: "Teknik praktis untuk mengelola dan menyelesaikan konflik secara konstruktif.",
     category: "Konseling",
@@ -228,6 +237,7 @@ Ketika emosi memuncak, gunakan formula: **Pause → Breathe → Reflect → Resp
   },
   {
     id: "8",
+    slug: "rutinitas-produktif-berkelanjutan",
     title: "Membangun Rutinitas Produktif yang Berkelanjutan",
     description: "Panduan membangun sistem kebiasaan yang realistis dan bertahan lama.",
     category: "Pengembangan Diri",
@@ -250,6 +260,7 @@ Kebanyakan orang gagal membangun rutinitas karena merancangnya terlalu ambisius 
   },
   {
     id: "9",
+    slug: "emotional-intelligence-pemimpin",
     title: "Emotional Intelligence untuk Pemimpin Masa Depan",
     description: "Mengembangkan kecerdasan emosional sebagai kompetensi kepemimpinan utama abad 21.",
     category: "Kepemimpinan",
@@ -277,6 +288,7 @@ Penelitian menunjukkan bahwa Emotional Intelligence (EQ) berkontribusi 80% terha
   // ── Stepped / Series content ─────────────────────────────────────────────
   {
     id: "10",
+    slug: "transformasi-diri-4-langkah",
     title: "Transformasi Diri: Perjalanan 4 Langkah Menuju Hidup Bermakna",
     description:
       "Seri pembelajaran bertahap yang membawa Anda dari kesadaran diri menuju aksi nyata. Setiap langkah membuka langkah berikutnya — selesaikan satu untuk melanjutkan.",
