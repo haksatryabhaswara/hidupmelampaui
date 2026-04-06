@@ -1,0 +1,8 @@
+{
+  "storage": [
+    {
+      "bucket": "hidupmelampaui.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
+}

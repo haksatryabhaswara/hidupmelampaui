@@ -8,9 +8,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { allContents, type StepContent } from "@/lib/content-data";
+import { allContents, type Content, type StepContent } from "@/lib/content-data";
 import { Certificate } from "@/components/certificate";
 import { useProgress } from "@/lib/progress";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // ─── Minimal YouTube IFrame API types ────────────────────────────────────────
 declare global {
@@ -20,6 +22,8 @@ declare global {
         id: string | HTMLElement,
         opts: {
           videoId: string;
+          width?: string | number;
+          height?: string | number;
           playerVars?: Record<string, string | number>;
           events?: {
             onStateChange?: (e: { data: number }) => void;
@@ -39,17 +43,22 @@ function formatRupiah(n: number) {
   return "Rp\u00A0" + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-function renderBody(body: string) {
-  return body.split("\n").map((line, i) => {
-    if (line.startsWith("## "))   return <h2 key={i} className="text-xl font-bold text-[var(--foreground)] mt-6 mb-3">{line.slice(3)}</h2>;
-    if (line.startsWith("### "))  return <h3 key={i} className="text-lg font-semibold text-[var(--foreground)] mt-4 mb-2">{line.slice(4)}</h3>;
-    if (line.startsWith("> "))    return <blockquote key={i} className="border-l-4 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)] my-4">{line.slice(2)}</blockquote>;
-    if (line.startsWith("---"))   return <hr key={i} className="border-[var(--border)] my-6" />;
-    if (line.startsWith("- "))    return <li key={i} className="text-[var(--muted-foreground)] ml-4">{line.slice(2)}</li>;
-    if (/^\d+\. /.test(line))     return <li key={i} className="text-[var(--muted-foreground)] ml-4 list-decimal">{line.replace(/^\d+\. /, "")}</li>;
-    if (line.trim() === "")       return <br key={i} />;
-    return <p key={i} className="text-[var(--muted-foreground)] leading-relaxed my-2">{line}</p>;
-  });
+function sanitizeHtml(html: string) {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    .replace(/<iframe\b[^>]*\/>/gi, "")
+    .replace(/<embed\b[^>]*>/gi, "")
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, "");
+}
+
+function HtmlBody({ html }: { html: string }) {
+  return (
+    <div
+      className="prose prose-sm max-w-none text-[var(--muted-foreground)] [&_h1]:text-[var(--foreground)] [&_h2]:text-[var(--foreground)] [&_h3]:text-[var(--foreground)] [&_h4]:text-[var(--foreground)] [&_strong]:text-[var(--foreground)] [&_a]:text-[var(--primary)] [&_blockquote]:border-[var(--primary)] [&_hr]:border-[var(--border)]"
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
+    />
+  );
 }
 
 // ─── YouTube player hook ──────────────────────────────────────────────────────
@@ -77,6 +86,8 @@ function useYouTubePlayer(
       container.appendChild(slot);
       player = new window.YT.Player(slot, {
         videoId: youtubeId!,
+        width: "100%",
+        height: "100%",
         playerVars: { rel: 0, modestbranding: 1 },
         events: {
           onStateChange(e) { if (e.data === 0) onEndedRef.current(); },
@@ -151,8 +162,8 @@ function ArticleSection({ body, itemId, onComplete, alreadyDone }: {
 }) {
   const { endRef, reached } = useScrolledToEnd(itemId);
   return (
-    <div className="prose prose-sm max-w-none">
-      {renderBody(body)}
+    <div>
+      <HtmlBody html={body} />
       <div ref={endRef} className="h-1" />
       {!alreadyDone && (
         <div className="mt-8 flex justify-center">
@@ -286,7 +297,26 @@ export default function KontenDetailPage() {
   const { user, openAuthModal, loading } = useAuth();
 
   const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
-  const content = allContents.find((c) => c.slug === slug);
+  const [content, setContent] = useState<Content | undefined>(allContents.find((c) => c.slug === slug));
+
+  // Try loading from Firestore first, fall back to static data
+  useEffect(() => {
+    if (!slug) return;
+    getDocs(query(collection(db, "contents"), where("slug", "==", slug)))
+      .then((snap) => {
+        if (!snap.empty) {
+          const newContent = { ...(snap.docs[0].data() as Content), id: snap.docs[0].id };
+          setContent(newContent);
+          // Set initial active step id async (avoids synchronous setState in effect)
+          if (newContent.isSteppedContent && newContent.steps?.length) {
+            setActiveStepId((prev) => prev ?? newContent.steps![0].id);
+          }
+        }
+      })
+      .catch(() => {
+        // keep static fallback already in state
+      });
+  }, [slug]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Progress backed by Firestore (authenticated) or localStorage (guest)
   const { completed, paid, progressLoading, markCompleted, markPaid } = useProgress(user);
@@ -303,14 +333,10 @@ export default function KontenDetailPage() {
 
   // Use the stable numeric id for progress; slug is only for URLs
 
-  const [activeStepId, setActiveStepId] = useState<string | null>(null);
+  const [activeStepId, setActiveStepId] = useState<string | null>(
+    content?.isSteppedContent && content.steps?.length ? content.steps[0].id : null
+  );
   const [showCertificate, setShowCertificate] = useState(false);
-
-  useEffect(() => {
-    if (content?.isSteppedContent && content.steps?.length && !activeStepId) {
-      setActiveStepId(content.steps[0].id);
-    }
-  }, [content, activeStepId]);
 
   useEffect(() => {
     if (!loading && !user && content && !content.isSteppedContent && content.access !== "free") {
@@ -527,8 +553,8 @@ export default function KontenDetailPage() {
                           </>
                         )}
                         {activeStep.body && (
-                          <div className="prose prose-sm max-w-none pt-4 border-t border-[var(--border)]">
-                            {renderBody(activeStep.body)}
+                          <div className="pt-4 border-t border-[var(--border)]">
+                            <HtmlBody html={activeStep.body} />
                           </div>
                         )}
                       </div>
@@ -730,8 +756,8 @@ export default function KontenDetailPage() {
                   <ArticleSection body={content.body} itemId={content.id} alreadyDone={alreadyDone} onComplete={handleSingleComplete} />
                 </div>
               ) : (
-                <div className="prose prose-sm max-w-none pt-6">
-                  {renderBody(content.body)}
+                <div className="pt-6">
+                  <HtmlBody html={content.body} />
                   {!alreadyDone && (
                     <div className="mt-6 flex justify-center">
                       <button onClick={handleSingleComplete}

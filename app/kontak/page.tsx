@@ -1,8 +1,48 @@
 "use client";
 
-import { Mail, Phone, MapPin, Clock, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { Mail, Phone, MapPin, Clock, MessageCircle, Send, CheckCircle } from "lucide-react";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function KontakPage() {
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    topic: "",
+    message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      await addDoc(collection(db, "contacts"), {
+        ...form,
+        source: "kontak",
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+      setSubmitted(true);
+      setForm({ firstName: "", lastName: "", email: "", phone: "", topic: "", message: "" });
+    } catch {
+      setError("Gagal mengirim pesan. Silakan coba lagi atau hubungi kami via WhatsApp.");
+    }
+    setSubmitting(false);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
@@ -80,44 +120,67 @@ export default function KontakPage() {
           <div className="lg:col-span-2">
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8">
               <h2 className="text-xl font-bold text-[var(--foreground)] mb-6">Kirim Pesan</h2>
-              <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama Anda" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
+
+              {submitted ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
+                  <CheckCircle className="w-14 h-14 text-emerald-500" />
+                  <h3 className="text-xl font-bold text-[var(--foreground)]">Pesan Terkirim!</h3>
+                  <p className="text-[var(--muted-foreground)] max-w-sm">
+                    Terima kasih telah menghubungi kami. Tim kami akan membalas pesan Anda sesegera mungkin.
+                  </p>
+                  <button
+                    onClick={() => setSubmitted(false)}
+                    className="mt-4 px-5 py-2 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+                  >
+                    Kirim Pesan Lain
+                  </button>
+                </div>
+              ) : (
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama <span className="text-red-500">*</span></label>
+                      <input name="firstName" type="text" value={form.firstName} onChange={handleChange} placeholder="Nama Anda" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama Akhir</label>
+                      <input name="lastName" type="text" value={form.lastName} onChange={handleChange} placeholder="Nama belakang" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nama Akhir</label>
-                    <input type="text" placeholder="Nama belakang" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Email <span className="text-red-500">*</span></label>
+                    <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="email@anda.com" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Email <span className="text-red-500">*</span></label>
-                  <input type="email" placeholder="email@anda.com" required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nomor WhatsApp</label>
-                  <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Topik</label>
-                  <select className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning>
-                    <option value="">Pilih topik</option>
-                    <option>Program Individu</option>
-                    <option>Program Corporate</option>
-                    <option>Konseling</option>
-                    <option>Informasi Umum</option>
-                    <option>Kemitraan</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Pesan <span className="text-red-500">*</span></label>
-                  <textarea rows={5} placeholder="Ceritakan kebutuhan atau pertanyaan Anda..." required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" suppressHydrationWarning />
-                </div>
-                <button type="submit" className="w-full bg-[var(--primary)] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" suppressHydrationWarning>
-                  <Mail className="w-4 h-4" /> Kirim Pesan
-                </button>
-              </form>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Nomor WhatsApp</label>
+                    <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Topik</label>
+                    <select name="topic" value={form.topic} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]">
+                      <option value="">Pilih topik</option>
+                      <option>Program Individu</option>
+                      <option>Program Corporate</option>
+                      <option>Konseling</option>
+                      <option>Informasi Umum</option>
+                      <option>Kemitraan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">Pesan <span className="text-red-500">*</span></label>
+                    <textarea name="message" rows={5} value={form.message} onChange={handleChange} placeholder="Ceritakan kebutuhan atau pertanyaan Anda..." required className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                  </div>
+                  {error && <p className="text-sm text-red-500">{error}</p>}
+                  <button type="submit" disabled={submitting} className="w-full bg-[var(--primary)] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                    {submitting ? (
+                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Mengirim...</>
+                    ) : (
+                      <><Send className="w-4 h-4" /> Kirim Pesan</>
+                    )}
+                  </button>
+                </form>
+              )}
+
             </div>
           </div>
         </div>

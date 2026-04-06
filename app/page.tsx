@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import {
   Star,
@@ -687,6 +688,30 @@ function CorporateSection() {
 }
 
 function KonselingSection() {
+  const [form, setForm] = React.useState({ firstName: "", lastName: "", email: "", message: "" });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email || !form.message) return;
+    setSubmitting(true);
+    try {
+      const { collection, addDoc } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+      await addDoc(collection(db, "contacts"), {
+        ...form,
+        source: "home",
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+      setSubmitted(true);
+    } catch {
+      // silent fail — form is still a good UX
+    }
+    setSubmitting(false);
+  };
+
   return (
     <section id="kontak" className="py-20 bg-[var(--muted)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -707,29 +732,39 @@ function KonselingSection() {
           </div>
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8">
             <h3 className="font-bold text-[var(--foreground)] text-xl mb-6">Hubungi Kami</h3>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama</label>
-                  <input type="text" placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
+            {submitted ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-7 h-7" />
+                </div>
+                <p className="font-semibold text-[var(--foreground)]">Pesan Terkirim!</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Tim kami akan menghubungi Anda segera.</p>
+              </div>
+            ) : (
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama</label>
+                    <input type="text" value={form.firstName} onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))} placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama Akhir</label>
+                    <input type="text" value={form.lastName} onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))} placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama Akhir</label>
-                  <input type="text" placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Email <span className="text-red-500">*</span></label>
+                  <input type="email" required value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Email <span className="text-red-500">*</span></label>
-                <input type="email" placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" suppressHydrationWarning />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Pesan <span className="text-red-500">*</span></label>
-                <textarea rows={4} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" suppressHydrationWarning />
-              </div>
-              <button type="submit" className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" suppressHydrationWarning>
-                <Mail className="w-4 h-4" /> Kirim Pesan
-              </button>
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Pesan <span className="text-red-500">*</span></label>
+                  <textarea rows={4} required value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                </div>
+                <button type="submit" disabled={submitting} className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                  {submitting ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Mengirim...</> : <><Mail className="w-4 h-4" /> Kirim Pesan</>}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

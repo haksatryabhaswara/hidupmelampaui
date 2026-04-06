@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme, useIsClient } from "@/lib/theme";
-import { Sun, Moon, Menu, X, BookOpen, User, LogOut, ChevronDown } from "lucide-react";
+import { Sun, Moon, Menu, X, BookOpen, User, LogOut, ChevronDown, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const navLinks = [
@@ -18,7 +18,7 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, role } = useAuth();
   const isClient = useIsClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -96,6 +96,15 @@ export function Navbar() {
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-1 w-48 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-50">
+                    {role === "admin" && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-[var(--muted)] transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Shield className="w-4 h-4" /> Panel Admin
+                      </Link>
+                    )}
                     <Link
                       href="/profil"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"

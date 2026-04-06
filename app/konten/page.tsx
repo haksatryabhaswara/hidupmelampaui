@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart, Layers } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { allContents } from "@/lib/content-data";
+import { allContents, type Content } from "@/lib/content-data";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
 
@@ -18,8 +20,21 @@ export default function KontenPage() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [typeFilter, setTypeFilter] = useState("Semua Tipe");
   const [accessFilter, setAccessFilter] = useState("Semua Akses");
+  const [contents, setContents] = useState<Content[]>(allContents);
 
-  const filtered = allContents.filter((c) => {
+  useEffect(() => {
+    getDocs(query(collection(db, "contents"), orderBy("title")))
+      .then((snap) => {
+        if (!snap.empty) {
+          setContents(snap.docs.map((d) => ({ ...(d.data() as Content), id: d.id })));
+        }
+      })
+      .catch(() => {
+        // keep static fallback
+      });
+  }, []);
+
+  const filtered = contents.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === "Semua" || c.category === activeCategory;
     const matchType = typeFilter === "Semua Tipe" || (typeFilter === "Video" ? c.type === "video" : c.type === "article");
@@ -43,7 +58,7 @@ export default function KontenPage() {
     );
   };
 
-  const ctaButton = (content: typeof allContents[0]) => {
+  const ctaButton = (content: Content) => {
     if (content.access === "free") {
       return (
         <Link
