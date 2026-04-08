@@ -13,8 +13,8 @@ import {
   MessageSquare,
   ChevronRight,
   Menu,
-  X,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -24,6 +24,7 @@ const sidebarLinks = [
   { href: "/admin/tentang", label: "Tentang", icon: Info },
   { href: "/admin/pengguna", label: "Pengguna", icon: Users },
   { href: "/admin/pesan", label: "Pesan Masuk", icon: MessageSquare },
+  { href: "/admin/scri", label: "SCRI-36", icon: ClipboardList },
 ];
 
 interface SidebarProps {
