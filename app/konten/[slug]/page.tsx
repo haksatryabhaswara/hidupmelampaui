@@ -319,7 +319,14 @@ export default function KontenDetailPage() {
   }, [slug]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Progress backed by Firestore (authenticated) or localStorage (guest)
-  const { completed, paid, progressLoading, markCompleted, markPaid } = useProgress(user);
+  const { completed, started, paid, progressLoading, markCompleted, markStarted, markPaid } = useProgress(user);
+
+  // Log that user has started this content (fires once per content per user)
+  useEffect(() => {
+    if (!progressLoading && slug) {
+      void markStarted(slug);
+    }
+  }, [progressLoading, slug, markStarted]);
 
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -595,8 +602,8 @@ export default function KontenDetailPage() {
     (content.access === "login" && !!user) ||
     (content.access === "paid" && !!user && (paymentStatus === "success" || paid.has(content.id)));
 
-  const alreadyDone = completed.has(content.id);
-  const handleSingleComplete = () => handleMarkDone(content.id);
+  const alreadyDone = completed.has(slug);
+  const handleSingleComplete = () => handleMarkDone(slug);
 
   const handlePurchase = async () => {
     if (!user?.email) { openAuthModal(`/konten/${slug}`); return; }
@@ -753,7 +760,7 @@ export default function KontenDetailPage() {
             {canAccess && content.body && (
               content.type === "article" ? (
                 <div className="pt-6">
-                  <ArticleSection body={content.body} itemId={content.id} alreadyDone={alreadyDone} onComplete={handleSingleComplete} />
+                  <ArticleSection body={content.body} itemId={slug} alreadyDone={alreadyDone} onComplete={handleSingleComplete} />
                 </div>
               ) : (
                 <div className="pt-6">

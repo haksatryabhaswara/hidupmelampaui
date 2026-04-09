@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme, useIsClient } from "@/lib/theme";
-import { Sun, Moon, Menu, X, BookOpen, User, LogOut, ChevronDown, Shield } from "lucide-react";
+import { Sun, Moon, Menu, X, BookOpen, User, LogOut, ChevronDown, Shield, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/konten", label: "Konten" },
   { href: "/program", label: "Program" },
+  { href: "/scri", label: "SCRI" },
   { href: "/tentang", label: "Tentang" },
   { href: "/kontak", label: "Kontak" },
 ];
@@ -106,6 +107,13 @@ export function Navbar() {
                       </Link>
                     )}
                     <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <LayoutDashboard className="w-4 h-4" /> Dashboard
+                    </Link>
+                    <Link
                       href="/profil"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
                       onClick={() => setUserMenuOpen(false)}
@@ -170,12 +178,21 @@ export function Navbar() {
             ))}
             <div className="border-t border-[var(--border)] mt-2 pt-2 flex flex-col gap-1">
               {user ? (
-                <button
-                  onClick={() => { logout(); setMenuOpen(false); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:bg-[var(--muted)] transition-colors"
-                >
-                  <LogOut className="w-4 h-4" /> Keluar
-                </button>
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4" /> Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setMenuOpen(false); }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:bg-[var(--muted)] transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> Keluar
+                  </button>
+                </>
               ) : (
                 <>
                   <Link

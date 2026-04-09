@@ -9,6 +9,7 @@ import { db } from "@/lib/firebase";
 
 type ProgressStore = {
   completed: Record<string, string>; // contentId / stepId → ISO date
+  started: Record<string, string>;   // contentId → ISO date of first visit
   paid: string[];
 };
 
@@ -17,14 +18,14 @@ type ProgressStore = {
 const LOCAL_KEY = "hidup_progress_v1";
 
 function localLoad(): ProgressStore {
-  if (typeof window === "undefined") return { completed: {}, paid: [] };
+  if (typeof window === "undefined") return { completed: {}, started: {}, paid: [] };
   try {
     const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return { completed: {}, paid: [] };
+    if (!raw) return { completed: {}, started: {}, paid: [] };
     const d = JSON.parse(raw) as Partial<ProgressStore>;
-    return { completed: d.completed ?? {}, paid: d.paid ?? [] };
+    return { completed: d.completed ?? {}, started: d.started ?? {}, paid: d.paid ?? [] };
   } catch {
-    return { completed: {}, paid: [] };
+    return { completed: {}, started: {}, paid: [] };
   }
 }
 
@@ -36,6 +37,11 @@ function localSave(data: ProgressStore): void {
 function localMarkCompleted(id: string): void {
   const d = localLoad();
   if (!d.completed[id]) { d.completed[id] = new Date().toISOString(); localSave(d); }
+}
+
+function localMarkStarted(id: string): void {
+  const d = localLoad();
+  if (!d.started[id]) { d.started[id] = new Date().toISOString(); localSave(d); }
 }
 
 function localMarkPaid(id: string): void {
@@ -54,14 +60,14 @@ async function fsLoad(uid: string): Promise<ProgressStore> {
     const snap = await getDoc(progressRef(uid));
     if (snap.exists()) {
       const d = snap.data() as Partial<ProgressStore>;
-      return { completed: d.completed ?? {}, paid: d.paid ?? [] };
+      return { completed: d.completed ?? {}, started: d.started ?? {}, paid: d.paid ?? [] };
     }
     // First sign-in: migrate any existing localStorage data into Firestore.
     const local = localLoad();
     await setDoc(progressRef(uid), local);
     return local;
   } catch {
-    return { completed: {}, paid: [] };
+    return { completed: {}, started: {}, paid: [] };
   }
 }
 
@@ -71,7 +77,16 @@ async function fsMarkCompleted(uid: string, id: string): Promise<void> {
     await updateDoc(progressRef(uid), { [`completed.${id}`]: now });
   } catch {
     // Document didn't exist yet — create it.
-    await setDoc(progressRef(uid), { completed: { [id]: now }, paid: [] });
+    await setDoc(progressRef(uid), { completed: { [id]: now }, started: {}, paid: [] });
+  }
+}
+
+async function fsMarkStarted(uid: string, id: string): Promise<void> {
+  const now = new Date().toISOString();
+  try {
+    await updateDoc(progressRef(uid), { [`started.${id}`]: now });
+  } catch {
+    await setDoc(progressRef(uid), { completed: {}, started: { [id]: now }, paid: [] });
   }
 }
 
@@ -79,7 +94,7 @@ async function fsMarkPaid(uid: string, id: string): Promise<void> {
   try {
     await updateDoc(progressRef(uid), { paid: arrayUnion(id) });
   } catch {
-    await setDoc(progressRef(uid), { completed: {}, paid: [id] });
+    await setDoc(progressRef(uid), { completed: {}, started: {}, paid: [id] });
   }
 }
 
@@ -87,6 +102,7 @@ async function fsMarkPaid(uid: string, id: string): Promise<void> {
 
 type ProgressState = {
   completed: Set<string>;
+  started: Set<string>;
   paid: Set<string>;
   loading: boolean;
 };
@@ -98,7 +114,7 @@ type ProgressState = {
  */
 export function useProgress(user: User | null) {
   const [state, setState] = useState<ProgressState>(
-    () => ({ completed: new Set(), paid: new Set(), loading: true }),
+    () => ({ completed: new Set(), started: new Set(), paid: new Set(), loading: true }),
   );
 
   useEffect(() => {
@@ -109,6 +125,7 @@ export function useProgress(user: User | null) {
       if (!cancelled) {
         setState({
           completed: new Set(Object.keys(data.completed)),
+          started: new Set(Object.keys(data.started)),
           paid: new Set(data.paid),
           loading: false,
         });
@@ -128,6 +145,18 @@ export function useProgress(user: User | null) {
     }
   }, [user]);
 
+  const markStarted = useCallback(async (id: string) => {
+    setState(prev => {
+      if (prev.started.has(id)) return prev;
+      return { ...prev, started: new Set([...prev.started, id]) };
+    });
+    if (user) {
+      await fsMarkStarted(user.uid, id);
+    } else {
+      localMarkStarted(id);
+    }
+  }, [user]);
+
   const markPaid = useCallback(async (id: string) => {
     setState(prev => ({ ...prev, paid: new Set([...prev.paid, id]) }));
     if (user) {
@@ -139,9 +168,11 @@ export function useProgress(user: User | null) {
 
   return {
     completed: state.completed,
+    started: state.started,
     paid: state.paid,
     progressLoading: state.loading,
     markCompleted,
+    markStarted,
     markPaid,
   };
 }
