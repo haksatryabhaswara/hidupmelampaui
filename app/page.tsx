@@ -2,6 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { allContents, type Content } from "@/lib/content-data";
 import {
   Star,
   Users,
@@ -25,93 +28,7 @@ import {
   Globe,
 } from "lucide-react";
 
-// ─── Dummy Content Data ─────────────────────────────────────────────────────────
-const dummyContents = [
-  {
-    id: "1",
-    slug: "fondasi-stabilitas-emosi",
-    title: "Fondasi Stabilitas Emosi: Membangun Ketenangan di Tengah Tekanan",
-    description: "Pelajari teknik-teknik praktis untuk mengelola emosi dan membangun ketahanan mental dalam kehidupan sehari-hari.",
-    type: "video",
-    youtubeId: "inpok4MKVLM",
-    duration: "45 menit",
-    category: "Pengembangan Diri",
-    isPremium: false,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.9,
-    students: 1240,
-  },
-  {
-    id: "2",
-    slug: "kepemimpinan-mikro",
-    title: "Kepemimpinan Mikro: Memimpin Diri Sebelum Memimpin Tim",
-    description: "Framework kepemimpinan berbasis nilai yang membantu Anda menjadi pemimpin yang matang secara emosional dan spiritual.",
-    type: "video",
-    youtubeId: "TQMbvJNRpLE",
-    duration: "1 jam 20 menit",
-    category: "Kepemimpinan",
-    isPremium: true,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.8,
-    students: 890,
-  },
-  {
-    id: "3",
-    slug: "integrasi-spiritual-kehidupan-profesional",
-    title: "Integrasi Spiritual dalam Kehidupan Profesional",
-    description: "Bagaimana nilai-nilai spiritual menjadi kompas dalam pengambilan keputusan dan membangun karier yang bermakna.",
-    type: "article",
-    youtubeId: null,
-    duration: "15 menit baca",
-    category: "Spiritual",
-    isPremium: false,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.7,
-    students: 2100,
-  },
-  {
-    id: "4",
-    slug: "gen-z-stabilitas-era-vuca",
-    title: "Gen Z & Stabilitas di Era VUCA: Panduan Bertahan dan Bertumbuh",
-    description: "Strategi spesifik bagi generasi Z untuk membangun fondasi hidup yang kokoh di tengah ketidakpastian global.",
-    type: "video",
-    youtubeId: "V42t0qVbCGI",
-    duration: "55 menit",
-    category: "Gen Z",
-    isPremium: true,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.9,
-    students: 1560,
-  },
-  {
-    id: "5",
-    slug: "arsitektur-kehidupan",
-    title: "Arsitektur Kehidupan: Merancang Hidup yang Bermakna",
-    description: "Panduan komprehensif untuk merancang blue print kehidupan yang stabil, produktif, dan berdampak bagi orang sekitar.",
-    type: "article",
-    youtubeId: null,
-    duration: "20 menit baca",
-    category: "Pengembangan Diri",
-    isPremium: false,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.6,
-    students: 3200,
-  },
-  {
-    id: "6",
-    slug: "corporate-human-architecture",
-    title: "Corporate Human Architecture: Membangun Tim yang Stabil",
-    description: "Pendekatan strategis untuk membangun stabilitas manusia di dalam organisasi — dari onboarding hingga leadership pipeline.",
-    type: "video",
-    youtubeId: "qYNweeDHiyU",
-    duration: "1 jam 40 menit",
-    category: "Korporat",
-    isPremium: true,
-    instructor: "Dr. Heru K. Wibawa",
-    rating: 4.9,
-    students: 640,
-  },
-];
+
 
 // ─── Subcomponents ──────────────────────────────────────────────────────────────
 
@@ -341,7 +258,10 @@ function PembentukanSection() {
   );
 }
 
-function ContentCard({ content }: { content: typeof dummyContents[0] }) {
+function ContentCard({ content }: { content: Content }) {
+  const isPaid = content.access === "paid";
+  const isLogin = content.access === "login";
+
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col">
       <div className="relative aspect-video bg-slate-800">
@@ -358,9 +278,14 @@ function ContentCard({ content }: { content: typeof dummyContents[0] }) {
             <BookOpen className="w-12 h-12 text-blue-300/50" />
           </div>
         )}
-        {content.isPremium && (
+        {isPaid && (
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            <Lock className="w-3 h-3" /> Premium
+            <Lock className="w-3 h-3" /> Berbayar
+          </div>
+        )}
+        {isLogin && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <Lock className="w-3 h-3" /> Login
           </div>
         )}
         <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
@@ -388,16 +313,16 @@ function ContentCard({ content }: { content: typeof dummyContents[0] }) {
           <span>{content.duration}</span>
         </div>
         <Link
-          href={content.isPremium ? "/auth/daftar" : `/konten/${content.slug}`}
+          href={`/konten/${content.slug}`}
           className={`w-full text-center py-2 rounded-lg text-sm font-medium transition-colors ${
-            content.isPremium
+            isPaid
               ? "bg-amber-500 hover:bg-amber-400 text-white"
               : "bg-[var(--primary)] hover:opacity-90 text-white"
           }`}
         >
-          {content.isPremium ? (
+          {isPaid ? (
             <span className="flex items-center justify-center gap-1.5">
-              <Lock className="w-3 h-3" /> Akses Premium
+              <Lock className="w-3 h-3" /> Akses Berbayar
             </span>
           ) : (
             <span className="flex items-center justify-center gap-1.5">
@@ -411,6 +336,21 @@ function ContentCard({ content }: { content: typeof dummyContents[0] }) {
 }
 
 function ContentSection() {
+  const [contents, setContents] = React.useState<Content[]>(() => allContents.slice(0, 6));
+
+  React.useEffect(() => {
+    getDocs(query(collection(db, "contents"), orderBy("title")))
+      .then((snap) => {
+        if (!snap.empty) {
+          const loaded = snap.docs
+            .map((d) => ({ ...(d.data() as Content), id: d.id }))
+            .filter((c) => !c.isSteppedContent); // exclude series from home preview
+          setContents(loaded.slice(0, 6));
+        }
+      })
+      .catch(() => {}); // keep static fallback
+  }, []);
+
   return (
     <section className="py-20 bg-[var(--background)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -427,7 +367,7 @@ function ContentSection() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dummyContents.map((content) => (
+          {contents.map((content) => (
             <ContentCard key={content.id} content={content} />
           ))}
         </div>
