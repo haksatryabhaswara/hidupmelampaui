@@ -12,6 +12,7 @@ import {
   Users,
   MessageSquare,
   ChevronRight,
+  ChevronDown,
   Menu,
   Shield,
   ClipboardList,
@@ -24,7 +25,6 @@ const sidebarLinks = [
   { href: "/admin/tentang", label: "Tentang", icon: Info },
   { href: "/admin/pengguna", label: "Pengguna", icon: Users },
   { href: "/admin/pesan", label: "Pesan Masuk", icon: MessageSquare },
-  { href: "/admin/scri", label: "SCRI-36", icon: ClipboardList },
 ];
 
 interface SidebarProps {
@@ -34,6 +34,9 @@ interface SidebarProps {
 }
 
 function SidebarContent({ email, pathname, onClose }: SidebarProps) {
+  const scriActive = pathname.startsWith("/admin/scri");
+  const [scriOpen, setScriOpen] = useState(scriActive);
+
   const isActive = (link: (typeof sidebarLinks)[0]) => {
     if (link.exact) return pathname === link.href;
     return pathname.startsWith(link.href);
@@ -75,6 +78,54 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
             </Link>
           );
         })}
+
+        {/* SCRI drilldown group */}
+        <div>
+          <button
+            onClick={() => setScriOpen((o) => !o)}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              scriActive
+                ? "text-[var(--foreground)] bg-[var(--muted)]"
+                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <ClipboardList className="w-4 h-4 flex-shrink-0" />
+              SCRI
+            </div>
+            {scriOpen ? (
+              <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+            )}
+          </button>
+
+          {scriOpen && (
+            <div className="mt-1 ml-4 pl-3 border-l border-[var(--border)] space-y-1">
+              {[
+                { href: "/admin/scri", label: "SCRI-36" },
+                { href: "/admin/scri72", label: "SCRI-72" },
+              ].map((child) => {
+                const childActive = pathname.startsWith(child.href);
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    onClick={onClose}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      childActive
+                        ? "bg-[var(--primary)] text-white"
+                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+                    }`}
+                  >
+                    {child.label}
+                    {childActive && <ChevronRight className="w-3 h-3 opacity-70" />}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
       <div className="p-3 border-t border-[var(--border)]">
         <Link

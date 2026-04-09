@@ -15,6 +15,8 @@ import { useAuth } from "@/lib/auth-context";
 import { allContents, type Content } from "@/lib/content-data";
 import { DIMENSIONS } from "@/lib/scri-data";
 import { ScriCertificate } from "@/components/scri-certificate";
+import { DIMENSIONS_72 } from "@/lib/scri72-data";
+import { Scri72Certificate } from "@/components/scri72-certificate";
 import Link from "next/link";
 import {
   BarChart2,
@@ -124,6 +126,10 @@ export default function DashboardPage() {
   const [progressLoading, setProgressLoading] = useState(true);
   const [showCert, setShowCert] = useState(false);
 
+  const [scri72Result, setScri72Result] = useState<ScriResult | null>(null);
+  const [scri72Loading, setScri72Loading] = useState(true);
+  const [showCert72, setShowCert72] = useState(false);
+
   // Translate old progress keys (static ID "1","2"… or Firestore doc IDs) → canonical slug.
   // Initialised synchronously with the static allContents map so the UI is never blocked.
   const [keyTranslation, setKeyTranslation] = useState<Map<string, string>>(() => {
@@ -194,6 +200,33 @@ export default function DashboardPage() {
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setScriLoading(false); });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  // Fetch latest SCRI-72 result
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getDocs(
+      query(
+        collection(db, "scri72_results"),
+        where("userId", "==", user.uid)
+      )
+    )
+      .then((snap) => {
+        if (!cancelled && !snap.empty) {
+          const sorted = snap.docs
+            .map((d) => d.data() as ScriResult)
+            .sort((a, b) => {
+              const aTime = a.completedAt?.toDate().getTime() ?? 0;
+              const bTime = b.completedAt?.toDate().getTime() ?? 0;
+              return bTime - aTime;
+            });
+          setScri72Result(sorted[0]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setScri72Loading(false); });
     return () => { cancelled = true; };
   }, [user]);
 
@@ -279,6 +312,14 @@ export default function DashboardPage() {
   const retakeAllowed = !scriCompletedAt || new Date() > retakeBlockedUntil(scriCompletedAt);
   const blockedUntilDate = scriCompletedAt ? retakeBlockedUntil(scriCompletedAt) : null;
 
+  const scri72CompletedAt = useMemo(() => {
+    if (!scri72Result?.completedAt) return null;
+    return scri72Result.completedAt.toDate();
+  }, [scri72Result]);
+
+  const retakeAllowed72 = !scri72CompletedAt || new Date() > retakeBlockedUntil(scri72CompletedAt);
+  const blockedUntilDate72 = scri72CompletedAt ? retakeBlockedUntil(scri72CompletedAt) : null;
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -308,6 +349,18 @@ export default function DashboardPage() {
         />
       )}
 
+      {showCert72 && scri72Result && scri72CompletedAt && (
+        <Scri72Certificate
+          userName={user.displayName ?? user.email ?? "Peserta"}
+          totalScore={scri72Result.totalScore}
+          maxScore={360}
+          scoringLabel={scri72Result.scoringLabel}
+          dimensionScores={scri72Result.dimensionScores ?? {}}
+          completedAt={scri72CompletedAt}
+          onClose={() => setShowCert72(false)}
+        />
+      )}
+
       <div className="min-h-screen px-4 py-10">
         <div className="max-w-4xl mx-auto space-y-10">
 
@@ -324,12 +377,12 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* ── SCRI Section ──────────────────────────────────────────── */}
+          {/* ── SCRI-36 Section ──────────────────────────────────────────── */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
                 <Star className="w-5 h-5 text-[var(--primary)]" />
-                Self-Command Readiness Index (SCRI)
+                SCRI-36 — Self-Command Readiness Index
               </h2>
             </div>
 
@@ -398,7 +451,7 @@ export default function DashboardPage() {
 
                   {retakeAllowed ? (
                     <Link
-                      href="/scri"
+                      href="/scri/36"
                       className="flex items-center gap-1.5 text-sm font-medium border border-[var(--border)] text-[var(--foreground)] px-4 py-2 rounded-lg hover:bg-[var(--muted)] transition-colors"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
@@ -424,10 +477,125 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <Link
-                  href="/scri"
+                  href="/scri/36"
                   className="inline-flex items-center gap-2 bg-[var(--primary)] text-[var(--primary-foreground)] px-5 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity"
                 >
                   Mulai Assessment
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* ── SCRI-72 Section ──────────────────────────────────────────── */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
+                <Star className="w-5 h-5 text-violet-500" />
+                SCRI-72 — Extended Self-Command Index
+              </h2>
+            </div>
+
+            {scri72Loading ? (
+              <div className="bg-[var(--card)] rounded-2xl p-8 border border-[var(--border)] flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+              </div>
+            ) : scri72Result ? (
+              <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] overflow-hidden">
+                {/* Score header */}
+                <div className="bg-violet-600 px-6 py-5 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="w-20 h-20 rounded-full bg-white/15 border border-white/25 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-3xl font-black text-white leading-none">{scri72Result.totalScore}</span>
+                    <span className="text-[10px] text-white/70 mt-0.5">/ 360</span>
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <p className="text-white/70 text-sm">Hasil Terakhir</p>
+                    <p className="text-white font-bold text-xl leading-snug">{scri72Result.scoringLabel}</p>
+                    {scri72CompletedAt && (
+                      <p className="text-white/60 text-xs mt-0.5">{formatDate(scri72CompletedAt)}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Interpretation */}
+                <div className="px-6 pt-5 pb-2">
+                  <p className="text-[var(--foreground)] leading-relaxed text-sm">
+                    {scri72Result.scoringMessage}
+                  </p>
+                </div>
+
+                {/* Dimension bars */}
+                <div className="px-6 pt-4 pb-5 space-y-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">
+                    Skor per Dimensi
+                  </p>
+                  {(() => {
+                    const activeDims = DIMENSIONS_72.filter((dim) => (scri72Result.dimensionScores?.[dim.id] ?? 0) > 0);
+                    const activeDimCount = activeDims.length || DIMENSIONS_72.length;
+                    const maxPerDim = Math.round(360 / activeDimCount);
+                    return activeDims.map((dim) => {
+                      const score = scri72Result.dimensionScores?.[dim.id] ?? 0;
+                      const pct = Math.min(100, Math.round((score / maxPerDim) * 100));
+                      return (
+                        <div key={dim.id}>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-xs text-[var(--foreground)]">{dim.label}</span>
+                            <span className="text-xs font-bold text-violet-500">{score}/{maxPerDim}</span>
+                          </div>
+                          <div className="h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-violet-500 rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* Actions */}
+                <div className="px-6 pb-5 flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setShowCert72(true)}
+                    className="flex items-center gap-1.5 text-sm font-medium bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 px-4 py-2 rounded-lg hover:opacity-80 transition-opacity"
+                  >
+                    <Star className="w-3.5 h-3.5" />
+                    Lihat Sertifikat
+                  </button>
+
+                  {retakeAllowed72 ? (
+                    <Link
+                      href="/scri72"
+                      className="flex items-center gap-1.5 text-sm font-medium border border-[var(--border)] text-[var(--foreground)] px-4 py-2 rounded-lg hover:bg-[var(--muted)] transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Ambil Ulang Assessment
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] px-4 py-2 rounded-lg border border-[var(--border)] cursor-not-allowed opacity-60">
+                      <Lock className="w-3.5 h-3.5" />
+                      Bisa diulang {blockedUntilDate72 ? formatDate(blockedUntilDate72) : ""}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[var(--card)] rounded-2xl p-8 border border-[var(--border)] text-center space-y-4">
+                <div className="w-16 h-16 bg-violet-100 dark:bg-violet-950/30 rounded-full flex items-center justify-center mx-auto">
+                  <Star className="w-8 h-8 text-violet-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-[var(--foreground)]">Belum ada hasil SCRI-72</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                    Ikuti Extended Assessment untuk eksplorasi 6 dimensi kesiapan diri.
+                  </p>
+                </div>
+                <Link
+                  href="/scri72"
+                  className="inline-flex items-center gap-2 bg-violet-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  Mulai SCRI-72
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
