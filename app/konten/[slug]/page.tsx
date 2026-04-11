@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import {
   ArrowLeft, BookOpen, Play, Lock, ShoppingCart, CheckCircle, ChevronRight,
   Award, Layers, Video, FileText,
@@ -291,7 +291,7 @@ function SingleVideoSetup({ youtubeId, contentId, onComplete }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 // Main page
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function KontenDetailPage() {
+function KontenDetailPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { user, openAuthModal, loading } = useAuth();
@@ -780,5 +780,13 @@ export default function KontenDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function KontenDetailPage() {
+  return (
+    <Suspense>
+      <KontenDetailPageContent />
+    </Suspense>
   );
 }

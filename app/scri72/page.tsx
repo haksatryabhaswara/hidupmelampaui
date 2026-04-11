@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   collection,
@@ -42,7 +42,7 @@ const BREAKPOINT_QUOTES = [
   },
 ];
 
-export default function Scri72Page() {
+function Scri72PageContent() {
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>("landing");
@@ -792,4 +792,12 @@ export default function Scri72Page() {
   }
 
   return null;
+}
+
+export default function Scri72Page() {
+  return (
+    <Suspense>
+      <Scri72PageContent />
+    </Suspense>
+  );
 }
