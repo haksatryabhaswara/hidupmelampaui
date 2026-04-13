@@ -1,5 +1,24 @@
 export type ContentAccess = "free" | "login" | "paid";
 
+export type ContentQuestionOption = {
+  label: string; // "a" | "b" | "c" | "d" | "e"
+  text: string;
+};
+
+export type ContentQuestion = {
+  id: string;
+  type: "essay" | "option";
+  question: string;
+  /** Only used when type === "option" — exactly 5 items (a–e) */
+  options?: ContentQuestionOption[];
+};
+
+export type ContentTest = {
+  /** Whether this test is enabled/shown to users */
+  enabled: boolean;
+  questions: ContentQuestion[];
+};
+
 export type StepContent = {
   id: string;
   title: string;
@@ -36,6 +55,8 @@ export type Content = {
   isSteppedContent?: boolean;
   /** Ordered list of steps — each must be completed before the next unlocks */
   steps?: StepContent[];
+  /** Optional test attached to this content */
+  test?: ContentTest;
 };
 
 export const allContents: Content[] = [

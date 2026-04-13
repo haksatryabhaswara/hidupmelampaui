@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { useAdminNotifications, AdminNotifCounts } from "@/lib/admin-notifications";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -16,6 +17,7 @@ import {
   Menu,
   Shield,
   ClipboardList,
+  Bell,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -30,11 +32,24 @@ const sidebarLinks = [
 interface SidebarProps {
   email: string | null;
   pathname: string;
+  notifications: AdminNotifCounts;
   onClose: () => void;
 }
 
-function SidebarContent({ email, pathname, onClose }: SidebarProps) {
-  const scriActive = pathname.startsWith("/admin/scri");
+function NotifBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+function SidebarContent({ email, pathname, notifications, onClose }: SidebarProps) {
+  const scriActive =
+    pathname === "/admin/scri" ||
+    pathname.startsWith("/admin/scri/") ||
+    pathname.startsWith("/admin/scri72");
   const [scriOpen, setScriOpen] = useState(scriActive);
 
   const isActive = (link: (typeof sidebarLinks)[0]) => {
@@ -59,6 +74,14 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
         {sidebarLinks.map((link) => {
           const Icon = link.icon;
           const active = isActive(link);
+          const badgeCount =
+            link.href === "/admin/pesan"
+              ? notifications.pesan
+              : link.href === "/admin/pengguna"
+              ? notifications.users
+              : link.href === "/admin/konten"
+              ? notifications.tests
+              : 0;
           return (
             <Link
               key={link.href}
@@ -74,7 +97,10 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 {link.label}
               </div>
-              {active && <ChevronRight className="w-3.5 h-3.5 opacity-70" />}
+              <div className="flex items-center gap-1">
+                <NotifBadge count={badgeCount} />
+                {active && <ChevronRight className="w-3.5 h-3.5 opacity-70" />}
+              </div>
             </Link>
           );
         })}
@@ -93,11 +119,14 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
               <ClipboardList className="w-4 h-4 flex-shrink-0" />
               SCRI
             </div>
-            {scriOpen ? (
-              <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5 opacity-70" />
-            )}
+            <div className="flex items-center gap-1">
+              <NotifBadge count={notifications.scri36 + notifications.scri72} />
+              {scriOpen ? (
+                <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+              )}
+            </div>
           </button>
 
           {scriOpen && (
@@ -106,7 +135,10 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
                 { href: "/admin/scri", label: "SCRI-36" },
                 { href: "/admin/scri72", label: "SCRI-72" },
               ].map((child) => {
-                const childActive = pathname.startsWith(child.href);
+                const childActive =
+                  child.href === "/admin/scri"
+                    ? pathname === "/admin/scri" || pathname.startsWith("/admin/scri/")
+                    : pathname.startsWith(child.href);
                 return (
                   <Link
                     key={child.href}
@@ -119,7 +151,16 @@ function SidebarContent({ email, pathname, onClose }: SidebarProps) {
                     }`}
                   >
                     {child.label}
-                    {childActive && <ChevronRight className="w-3 h-3 opacity-70" />}
+                    <div className="flex items-center gap-1">
+                      <NotifBadge
+                        count={
+                          child.href === "/admin/scri"
+                            ? notifications.scri36
+                            : notifications.scri72
+                        }
+                      />
+                      {childActive && <ChevronRight className="w-3 h-3 opacity-70" />}
+                    </div>
                   </Link>
                 );
               })}
@@ -144,6 +185,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const notifications = useAdminNotifications(pathname);
 
   useEffect(() => {
     if (!loading) {
@@ -164,7 +206,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-[var(--background)] overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 bg-[var(--card)] border-r border-[var(--border)] flex-shrink-0">
-        <SidebarContent email={user.email} pathname={pathname} onClose={() => setSidebarOpen(false)} />
+        <SidebarContent email={user.email} pathname={pathname} notifications={notifications} onClose={() => setSidebarOpen(false)} />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -175,7 +217,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             onClick={() => setSidebarOpen(false)}
           />
           <aside className="relative w-56 bg-[var(--card)] border-r border-[var(--border)] z-50 flex flex-col">
-            <SidebarContent email={user.email} pathname={pathname} onClose={() => setSidebarOpen(false)} />
+            <SidebarContent email={user.email} pathname={pathname} notifications={notifications} onClose={() => setSidebarOpen(false)} />
           </aside>
         </div>
       )}
@@ -190,7 +232,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="font-semibold text-sm text-[var(--foreground)]">Panel Admin</span>
+          <span className="font-semibold text-sm text-[var(--foreground)] flex-1">Panel Admin</span>
+          {notifications.total > 0 && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="relative p-1.5 rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+              aria-label="Notifikasi"
+            >
+              <Bell className="w-5 h-5" />
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 text-[9px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center leading-none">
+                {notifications.total > 99 ? "99+" : notifications.total}
+              </span>
+            </button>
+          )}
         </div>
 
         <main className="flex-1 overflow-y-auto">

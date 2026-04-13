@@ -9,7 +9,7 @@ import {
 import { db } from "@/lib/firebase";
 import { DIMENSIONS } from "@/lib/scri-data";
 import Link from "next/link";
-import { ClipboardList, Star, ArrowRight } from "lucide-react";
+import { ClipboardList, Star, ArrowRight, Users } from "lucide-react";
 
 export default function AdminScriPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -58,7 +58,7 @@ export default function AdminScriPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin/scri/pertanyaan"
           className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 hover:shadow-md transition-shadow"
@@ -91,6 +91,22 @@ export default function AdminScriPage() {
             </div>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-950/40">
               <Star className="w-5 h-5 text-amber-500" />
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/scri/hasil"
+          className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-[var(--muted-foreground)]">Hasil Pengisian</p>
+              <p className="text-3xl font-bold text-[var(--foreground)] mt-1">→</p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">lihat &amp; export data</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/40">
+              <Users className="w-5 h-5 text-emerald-500" />
             </div>
           </div>
         </Link>

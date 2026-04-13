@@ -4,9 +4,30 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { updateProfile } from "firebase/auth";
-import { doc, updateDoc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { User, Shield, Save, Check, Settings, BookOpen, Calendar, ClipboardList, ArrowRight, Star } from "lucide-react";
+import {
+  User,
+  Shield,
+  Save,
+  Check,
+  Settings,
+  BookOpen,
+  Calendar,
+  ClipboardList,
+  ArrowRight,
+  Star,
+} from "lucide-react";
 import Link from "next/link";
 
 interface ScriResult {
@@ -22,11 +43,18 @@ export default function ProfilPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [joinedDate, setJoinedDate] = useState<string | null>(null);
-  const [scri36Result, setScri36Result] = useState<ScriResult | null | "loading">("loading");
-  const [scri72Result, setScri72Result] = useState<ScriResult | null | "loading">("loading");
+  const [scri36Result, setScri36Result] = useState<
+    ScriResult | null | "loading"
+  >("loading");
+  const [scri72Result, setScri72Result] = useState<
+    ScriResult | null | "loading"
+  >("loading");
 
   useEffect(() => {
-    if (!loading && !user) { router.replace("/auth/masuk"); return; }
+    if (!loading && !user) {
+      router.replace("/auth/masuk");
+      return;
+    }
     if (!user) return;
     // Load profile data from Firestore
     getDoc(doc(db, "users", user.uid)).then((snap) => {
@@ -40,7 +68,7 @@ export default function ProfilPage() {
               day: "numeric",
               month: "long",
               year: "numeric",
-            })
+            }),
           );
         }
       } else {
@@ -54,15 +82,17 @@ export default function ProfilPage() {
         collection(db, "scri_results"),
         where("userId", "==", user.uid),
         orderBy("completedAt", "desc"),
-        limit(1)
-      )
-    ).then((snap) => {
-      if (!snap.empty) {
-        setScri36Result(snap.docs[0].data() as ScriResult);
-      } else {
-        setScri36Result(null);
-      }
-    }).catch(() => setScri36Result(null));
+        limit(1),
+      ),
+    )
+      .then((snap) => {
+        if (!snap.empty) {
+          setScri36Result(snap.docs[0].data() as ScriResult);
+        } else {
+          setScri36Result(null);
+        }
+      })
+      .catch(() => setScri36Result(null));
 
     // Fetch latest SCRI-72 result
     getDocs(
@@ -70,15 +100,17 @@ export default function ProfilPage() {
         collection(db, "scri72_results"),
         where("userId", "==", user.uid),
         orderBy("completedAt", "desc"),
-        limit(1)
-      )
-    ).then((snap) => {
-      if (!snap.empty) {
-        setScri72Result(snap.docs[0].data() as ScriResult);
-      } else {
-        setScri72Result(null);
-      }
-    }).catch(() => setScri72Result(null));
+        limit(1),
+      ),
+    )
+      .then((snap) => {
+        if (!snap.empty) {
+          setScri72Result(snap.docs[0].data() as ScriResult);
+        } else {
+          setScri72Result(null);
+        }
+      })
+      .catch(() => setScri72Result(null));
   }, [user, loading, router]);
 
   if (loading || !user) {
@@ -120,8 +152,12 @@ export default function ProfilPage() {
             {initials}
           </div>
           <div>
-            <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">Profil Pengguna</p>
-            <h1 className="text-3xl font-bold">{user.displayName ?? "Pengguna"}</h1>
+            <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">
+              Profil Pengguna
+            </p>
+            <h1 className="text-3xl font-bold">
+              {user.displayName ?? "Pengguna"}
+            </h1>
             <p className="text-blue-200/80 text-sm mt-1">{user.email}</p>
           </div>
         </div>
@@ -153,7 +189,9 @@ export default function ProfilPage() {
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
             <div className="flex items-center gap-2">
               <User className="w-5 h-5 text-[var(--primary)]" />
-              <h2 className="text-lg font-bold text-[var(--foreground)]">Informasi Profil</h2>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">
+                Informasi Profil
+              </h2>
             </div>
 
             <div className="space-y-4">
@@ -179,7 +217,9 @@ export default function ProfilPage() {
                   disabled
                   className="w-full px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)] text-[var(--muted-foreground)] text-sm cursor-not-allowed"
                 />
-                <p className="text-xs text-[var(--muted-foreground)] mt-1">Email tidak dapat diubah.</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                  Email tidak dapat diubah.
+                </p>
               </div>
             </div>
 
@@ -210,7 +250,9 @@ export default function ProfilPage() {
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-[var(--primary)]" />
-                <h2 className="text-lg font-bold text-[var(--foreground)]">Akses Konten</h2>
+                <h2 className="text-lg font-bold text-[var(--foreground)]">
+                  Akses Konten
+                </h2>
               </div>
               <p className="text-sm text-[var(--muted-foreground)]">
                 {role === "admin"
@@ -229,10 +271,13 @@ export default function ProfilPage() {
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  <h2 className="text-lg font-bold text-amber-800 dark:text-amber-300">Panel Admin</h2>
+                  <h2 className="text-lg font-bold text-amber-800 dark:text-amber-300">
+                    Panel Admin
+                  </h2>
                 </div>
                 <p className="text-sm text-amber-700 dark:text-amber-400">
-                  Anda memiliki hak akses administrator. Kelola konten, pengguna, dan pengaturan situs.
+                  Anda memiliki hak akses administrator. Kelola konten,
+                  pengguna, dan pengaturan situs.
                 </p>
                 <Link
                   href="/admin"
@@ -242,100 +287,6 @@ export default function ProfilPage() {
                 </Link>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* SCRI Assessment History */}
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-[var(--primary)]" />
-            <h2 className="text-lg font-bold text-[var(--foreground)]">Riwayat Asesmen SCRI</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* SCRI-36 */}
-            <div className="border border-[var(--border)] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">SCRI-36</p>
-                  <p className="text-sm text-[var(--muted-foreground)] mt-0.5">6 Dimensi · 36 Pertanyaan</p>
-                </div>
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-indigo-500" />
-                </div>
-              </div>
-
-              {scri36Result === "loading" ? (
-                <div className="h-12 flex items-center">
-                  <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : scri36Result ? (
-                <div className="space-y-1">
-                  <div className="flex items-end gap-2">
-                    <span className="text-3xl font-black text-[var(--foreground)]">{scri36Result.totalScore}</span>
-                    <span className="text-sm text-[var(--muted-foreground)] pb-0.5">/ 180</span>
-                  </div>
-                  <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{scri36Result.scoringLabel}</p>
-                  {scri36Result.completedAt?.toDate && (
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      {scri36Result.completedAt.toDate().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-[var(--muted-foreground)]">Belum pernah mengikuti assessment.</p>
-              )}
-
-              <Link
-                href="/scri"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                {scri36Result && scri36Result !== "loading" ? "Ulangi Assessment" : "Mulai Sekarang"}
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* SCRI-72 */}
-            <div className="border border-[var(--border)] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">SCRI-72</p>
-                  <p className="text-sm text-[var(--muted-foreground)] mt-0.5">6 Dimensi · 72 Pertanyaan</p>
-                </div>
-                <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/40 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-violet-500" />
-                </div>
-              </div>
-
-              {scri72Result === "loading" ? (
-                <div className="h-12 flex items-center">
-                  <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : scri72Result ? (
-                <div className="space-y-1">
-                  <div className="flex items-end gap-2">
-                    <span className="text-3xl font-black text-[var(--foreground)]">{scri72Result.totalScore}</span>
-                    <span className="text-sm text-[var(--muted-foreground)] pb-0.5">/ 360</span>
-                  </div>
-                  <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">{scri72Result.scoringLabel}</p>
-                  {scri72Result.completedAt?.toDate && (
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      {scri72Result.completedAt.toDate().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-[var(--muted-foreground)]">Belum pernah mengikuti assessment.</p>
-              )}
-
-              <Link
-                href="/scri72"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline"
-              >
-                {scri72Result && scri72Result !== "loading" ? "Ulangi Assessment" : "Mulai Sekarang"}
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
           </div>
         </div>
       </div>

@@ -27,6 +27,7 @@ import {
   Upload,
   Filter,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
@@ -48,7 +49,6 @@ export default function AdminKontenPage() {
   const [seeding, setSeeding] = useState(false);
 
   const loadContents = useCallback(async () => {
-    setLoading(true);
     try {
       const snap = await getDocs(query(collection(db, "contents"), orderBy("title")));
       if (!snap.empty) {
@@ -59,12 +59,13 @@ export default function AdminKontenPage() {
       }
     } catch {
       setContents(allContents);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    loadContents();
+    void loadContents();
   }, [loadContents]);
 
   async function handleDelete(id: string) {
@@ -86,6 +87,7 @@ export default function AdminKontenPage() {
       for (const content of allContents) {
         await setDoc(doc(db, "contents", content.id), content);
       }
+      setLoading(true);
       await loadContents();
     } catch {
       alert("Gagal mengimpor data.");
@@ -250,6 +252,15 @@ export default function AdminKontenPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5">
+                        {content.test?.enabled && (
+                          <Link
+                            href={`/admin/konten/${content.id}/jawaban`}
+                            className="p-1.5 rounded-md text-[var(--muted-foreground)] hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
+                            title="Lihat Jawaban Tes"
+                          >
+                            <ClipboardList className="w-4 h-4" />
+                          </Link>
+                        )}
                         <Link
                           href={`/admin/konten/${content.id}`}
                           className="p-1.5 rounded-md text-[var(--muted-foreground)] hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"

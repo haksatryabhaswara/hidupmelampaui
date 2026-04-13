@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type Content, type StepContent, type ContentAccess } from "@/lib/content-data";
+import { type Content, type StepContent, type ContentAccess, type ContentTest, type ContentQuestion, type ContentQuestionOption } from "@/lib/content-data";
 import {
   Plus,
   Trash2,
@@ -14,6 +14,9 @@ import {
   LogIn,
   Lock,
   GripVertical,
+  ClipboardList,
+  AlignLeft,
+  List,
 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/rich-text-editor";
@@ -39,6 +42,17 @@ const emptyStep = (): Omit<StepContent, "id"> & { id: string } => ({
 });
 
 const CATEGORIES = ["Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
+
+const OPTION_LABELS = ["a", "b", "c", "d", "e"];
+
+const emptyQuestion = (): ContentQuestion => ({
+  id: crypto.randomUUID(),
+  type: "essay",
+  question: "",
+  options: OPTION_LABELS.map((label) => ({ label, text: "" })),
+});
+
+const emptyTest = (): ContentTest => ({ enabled: true, questions: [] });
 
 function slugify(text: string) {
   return text
@@ -66,9 +80,11 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
     body: initial.body ?? "",
     isSteppedContent: initial.isSteppedContent ?? false,
     steps: initial.steps ?? [],
+    test: initial.test ?? undefined,
   });
 
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
 
   const set = <K extends keyof ContentFormData>(key: K, value: ContentFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -97,6 +113,37 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       const steps = [...(prev.steps ?? [])];
       steps[idx] = { ...steps[idx], [key]: value } as StepContent;
       return { ...prev, steps };
+    });
+  };
+
+  const setTest = (updater: (prev: ContentTest) => ContentTest) =>
+    setForm((prev) => ({ ...prev, test: updater(prev.test ?? emptyTest()) }));
+
+  const addQuestion = () => {
+    const q = emptyQuestion();
+    setTest((prev) => ({ ...prev, questions: [...prev.questions, q] }));
+    setExpandedQuestion((form.test?.questions.length ?? 0));
+  };
+
+  const removeQuestion = (idx: number) => {
+    setTest((prev) => ({ ...prev, questions: prev.questions.filter((_, i) => i !== idx) }));
+    setExpandedQuestion(null);
+  };
+
+  const setQuestion = (idx: number, updater: (prev: ContentQuestion) => ContentQuestion) => {
+    setTest((prev) => {
+      const questions = [...prev.questions];
+      questions[idx] = updater(questions[idx]);
+      return { ...prev, questions };
+    });
+  };
+
+  const setOptionText = (qIdx: number, oIdx: number, text: string) => {
+    setQuestion(qIdx, (q) => {
+      const options = (q.options ?? OPTION_LABELS.map((label) => ({ label, text: "" }))).map(
+        (opt, i) => i === oIdx ? { ...opt, text } : opt
+      ) as ContentQuestionOption[];
+      return { ...q, options };
     });
   };
 
@@ -478,6 +525,151 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
           </div>
         </section>
       )}
+
+      {/* Test Section */}
+      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-[var(--primary)]" />
+            <h2 className="font-semibold text-[var(--foreground)]">Tes Konten <span className="text-xs font-normal text-[var(--muted-foreground)]">(opsional)</span></h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (form.test?.enabled !== undefined) {
+                setTest((prev) => ({ ...prev, enabled: !prev.enabled }));
+              } else {
+                setForm((prev) => ({ ...prev, test: emptyTest() }));
+              }
+            }}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              form.test?.enabled ? "bg-[var(--primary)]" : "bg-[var(--muted)]"
+            }`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              form.test?.enabled ? "translate-x-6" : "translate-x-1"
+            }`} />
+          </button>
+        </div>
+
+        {form.test?.enabled && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-[var(--muted-foreground)]">
+                {form.test.questions.length} pertanyaan
+              </p>
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-medium hover:bg-[var(--primary)]/20 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Tambah Pertanyaan
+              </button>
+            </div>
+
+            {form.test.questions.length === 0 && (
+              <p className="text-sm text-[var(--muted-foreground)] text-center py-6">
+                Belum ada pertanyaan. Klik &ldquo;Tambah Pertanyaan&rdquo; untuk memulai.
+              </p>
+            )}
+
+            <div className="space-y-3">
+              {form.test.questions.map((q, qIdx) => (
+                <div key={q.id} className="border border-[var(--border)] rounded-xl overflow-hidden">
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 bg-[var(--muted)]/30 cursor-pointer select-none"
+                    onClick={() => setExpandedQuestion(expandedQuestion === qIdx ? null : qIdx)}
+                  >
+                    <span className="text-xs font-bold text-[var(--muted-foreground)] w-20 flex-shrink-0">
+                      Pertanyaan {qIdx + 1}
+                    </span>
+                    <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">
+                      {q.question || "Belum ada pertanyaan"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+                        q.type === "essay"
+                          ? "bg-blue-100 dark:bg-blue-950/40 text-blue-600"
+                          : "bg-purple-100 dark:bg-purple-950/40 text-purple-600"
+                      }`}>
+                        {q.type === "essay" ? <AlignLeft className="w-3 h-3" /> : <List className="w-3 h-3" />}
+                        {q.type === "essay" ? "Esai" : "Pilihan"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeQuestion(qIdx); }}
+                        className="p-1 rounded text-[var(--muted-foreground)] hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      {expandedQuestion === qIdx
+                        ? <ChevronUp className="w-4 h-4 text-[var(--muted-foreground)]" />
+                        : <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />}
+                    </div>
+                  </div>
+
+                  {expandedQuestion === qIdx && (
+                    <div className="p-4 space-y-4">
+                      <div>
+                        <label className={labelClass}>Tipe Pertanyaan</label>
+                        <div className="flex gap-3">
+                          {(["essay", "option"] as const).map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setQuestion(qIdx, (prev) => ({ ...prev, type: t }))}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                                q.type === t
+                                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
+                              }`}
+                            >
+                              {t === "essay" ? <AlignLeft className="w-4 h-4" /> : <List className="w-4 h-4" />}
+                              {t === "essay" ? "Esai (teks bebas)" : "Pilihan Ganda (a–e)"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Pertanyaan *</label>
+                        <textarea
+                          required
+                          rows={2}
+                          value={q.question}
+                          onChange={(e) => setQuestion(qIdx, (prev) => ({ ...prev, question: e.target.value }))}
+                          className={inputClass + " resize-none"}
+                          placeholder="Tulis pertanyaan di sini..."
+                        />
+                      </div>
+
+                      {q.type === "option" && (
+                        <div className="space-y-2">
+                          <label className={labelClass}>Pilihan Jawaban</label>
+                          {OPTION_LABELS.map((label, oIdx) => (
+                            <div key={label} className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-[var(--muted)] flex items-center justify-center text-xs font-bold text-[var(--muted-foreground)] flex-shrink-0">
+                                {label}
+                              </span>
+                              <input
+                                type="text"
+                                value={q.options?.[oIdx]?.text ?? ""}
+                                onChange={(e) => setOptionText(qIdx, oIdx, e.target.value)}
+                                className={inputClass}
+                                placeholder={`Pilihan ${label}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Submit */}
       <div className="flex justify-end gap-3">

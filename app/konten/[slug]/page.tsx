@@ -4,15 +4,16 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import {
   ArrowLeft, BookOpen, Play, Lock, ShoppingCart, CheckCircle, ChevronRight,
-  Award, Layers, Video, FileText,
+  Award, Layers, Video, FileText, ClipboardList, AlignLeft, List, Send,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { allContents, type Content, type StepContent } from "@/lib/content-data";
 import { Certificate } from "@/components/certificate";
 import { useProgress } from "@/lib/progress";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { type ContentTest, type ContentQuestion } from "@/lib/content-data";
 
 // ─── Minimal YouTube IFrame API types ────────────────────────────────────────
 declare global {
@@ -286,6 +287,178 @@ function SingleVideoSetup({ youtubeId, contentId, onComplete }: {
 }) {
   useYouTubePlayer(youtubeId, `yt-${contentId}`, onComplete, true);
   return null;
+}
+
+// ─── ContentTestSection ───────────────────────────────────────────────────────
+function ContentTestSection({ test, contentId, contentSlug, user }: {
+  test: ContentTest;
+  contentId: string;
+  contentSlug: string;
+  user: { uid: string; email?: string | null; displayName?: string | null } | null;
+}) {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [checkingPrev, setCheckingPrev] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if user already submitted an answer for this content
+  useEffect(() => {
+    if (!user) { setCheckingPrev(false); return; }
+    getDocs(
+      query(
+        collection(db, "content_test_answers"),
+        where("contentId", "==", contentId),
+        where("userId", "==", user.uid),
+      ),
+    )
+      .then((snap) => { if (!snap.empty) setSubmitted(true); })
+      .catch(() => {})
+      .finally(() => setCheckingPrev(false));
+  }, [user, contentId]);
+
+  const setAnswer = (questionId: string, value: string) =>
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await addDoc(collection(db, "content_test_answers"), {
+        contentId,
+        contentSlug,
+        userId: user.uid,
+        userEmail: user.email ?? "",
+        userName: user.displayName ?? user.email ?? "",
+        answers: test.questions.map((q) => ({
+          questionId: q.id,
+          question: q.question,
+          type: q.type,
+          answer: answers[q.id] ?? "",
+        })),
+        submittedAt: serverTimestamp(),
+      });
+      setSubmitted(true);
+    } catch {
+      setError("Gagal mengirim jawaban. Silakan coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (checkingPrev) {
+    return (
+      <div className="mt-8 flex justify-center py-8">
+        <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="mt-8 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-8 text-center space-y-3">
+        <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
+        <h3 className="text-lg font-bold text-[var(--foreground)]">Tes Sudah Dikerjakan!</h3>
+        <p className="text-[var(--muted-foreground)] text-sm">Jawaban Anda telah tersimpan.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 border border-[var(--border)] rounded-2xl overflow-hidden">
+      <div className="flex items-center gap-3 px-6 py-4 bg-[var(--muted)]/30 border-b border-[var(--border)]">
+        <ClipboardList className="w-5 h-5 text-[var(--primary)]" />
+        <div>
+          <h3 className="font-semibold text-[var(--foreground)]">Tes Pemahaman</h3>
+          <p className="text-xs text-[var(--muted-foreground)]">{test.questions.length} pertanyaan · Opsional</p>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {!user && (
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
+            Anda harus login untuk mengirim jawaban tes.
+          </div>
+        )}
+        {test.questions.map((q: ContentQuestion, idx: number) => (
+          <div key={q.id} className="space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-bold flex items-center justify-center mt-0.5">
+                {idx + 1}
+              </span>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+                    q.type === "essay"
+                      ? "bg-blue-100 dark:bg-blue-950/40 text-blue-600"
+                      : "bg-purple-100 dark:bg-purple-950/40 text-purple-600"
+                  }`}>
+                    {q.type === "essay" ? <AlignLeft className="w-3 h-3" /> : <List className="w-3 h-3" />}
+                    {q.type === "essay" ? "Esai" : "Pilihan Ganda"}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-[var(--foreground)]">{q.question}</p>
+                {q.type === "essay" ? (
+                  <textarea
+                    rows={4}
+                    value={answers[q.id] ?? ""}
+                    onChange={(e) => setAnswer(q.id, e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none"
+                    placeholder="Tulis jawaban Anda di sini..."
+                    disabled={!user || submitting}
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {(q.options ?? []).map((opt) => (
+                      <label key={opt.label} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        answers[q.id] === opt.label
+                          ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                          : "border-[var(--border)] hover:bg-[var(--muted)]/50"
+                      }`}>
+                        <input
+                          type="radio"
+                          name={`q-${q.id}`}
+                          value={opt.label}
+                          checked={answers[q.id] === opt.label}
+                          onChange={() => setAnswer(q.id, opt.label)}
+                          className="sr-only"
+                          disabled={!user || submitting}
+                        />
+                        <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          answers[q.id] === opt.label
+                            ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                            : "border-[var(--border)] text-[var(--muted-foreground)]"
+                        }`}>
+                          {opt.label}
+                        </span>
+                        <span className="text-sm text-[var(--foreground)]">{opt.text}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {error && (
+          <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={!user || submitting}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-4 h-4" />
+            {submitting ? "Mengirim..." : "Kirim Jawaban"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -589,6 +762,16 @@ function KontenDetailPageContent() {
               </div>
             </div>
           </div>
+
+          {/* Test section — shown when all steps are done */}
+          {allDone && content.test?.enabled && content.test.questions.length > 0 && (
+            <ContentTestSection
+              test={content.test}
+              contentId={content.id}
+              contentSlug={slug}
+              user={user}
+            />
+          )}
         </div>
       </div>
     );
@@ -775,6 +958,16 @@ function KontenDetailPageContent() {
                   )}
                 </div>
               )
+            )}
+
+            {/* Test section — shown when content is done */}
+            {alreadyDone && canAccess && content.test?.enabled && content.test.questions.length > 0 && (
+              <ContentTestSection
+                test={content.test}
+                contentId={content.id}
+                contentSlug={slug}
+                user={user}
+              />
             )}
           </div>
         </div>
