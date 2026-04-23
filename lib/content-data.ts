@@ -33,6 +33,20 @@ export type StepContent = {
   body?: string;
 };
 
+export type DevotionEntry = {
+  id: string;
+  /** Sequential day number starting from 1. Day 1 is whatever day the user first starts. */
+  day: number;
+  title: string;
+  body?: string;
+  type: "video" | "article";
+  youtubeId: string | null;
+  access: ContentAccess;
+  price?: number;
+  /** Optional ordered sub-steps within this daily entry (not mandatory) */
+  steps?: StepContent[];
+};
+
 export type Content = {
   id: string;
   /** URL-friendly slug used for routing: /konten/[slug] */
@@ -55,6 +69,10 @@ export type Content = {
   isSteppedContent?: boolean;
   /** Ordered list of steps — each must be completed before the next unlocks */
   steps?: StepContent[];
+  /** If true, this is a Renungan Harian (Daily Devotion) series with per-day entries */
+  isDevotionContent?: boolean;
+  /** Daily entries (day 1–366) — used when isDevotionContent is true */
+  devotionEntries?: DevotionEntry[];
   /** Optional test attached to this content */
   test?: ContentTest;
 };

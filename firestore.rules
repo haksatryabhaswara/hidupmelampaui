@@ -75,6 +75,12 @@ service cloud.firestore {
     match /progress/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
       allow read: if isAdmin();
+
+      // Devotion progress subcollection: users manage their own entries
+      match /devotion/{contentId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
     }
 
     // Content test answers: authenticated users can create their own; admin can read all

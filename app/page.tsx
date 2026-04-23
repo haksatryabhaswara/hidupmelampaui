@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { allContents, type Content } from "@/lib/content-data";
+import { useAuth } from "@/lib/auth-context";
+import { getAllDevotionProgress, type DevotionProgress } from "@/lib/progress";
 import {
   Star,
   Users,
@@ -26,9 +28,62 @@ import {
   Briefcase,
   GraduationCap,
   Globe,
+  Sun,
+  X,
 } from "lucide-react";
 
 
+
+// ─── Devotion Notification ──────────────────────────────────────────────────────
+
+function DevotionNotification() {
+  const { user } = useAuth();
+  const [progresses, setProgresses] = useState<DevotionProgress[]>([]);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setProgresses([]); return; }
+    getAllDevotionProgress(user.uid)
+      .then(setProgresses)
+      .catch(() => {});
+  }, [user]);
+
+  if (!user || dismissed || progresses.length === 0) return null;
+
+  // Show up to first 2 active devotions
+  const active = progresses.slice(0, 2);
+
+  return (
+    <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Sun className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm font-semibold flex-shrink-0">Renungan Harian:</span>
+          <div className="flex items-center gap-3 flex-wrap flex-1">
+            {active.map((p) => (
+              <Link
+                key={p.contentId}
+                href={`/konten/${p.contentSlug}?day=${p.lastReadDay}`}
+                className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 transition-colors rounded-full px-3 py-1 text-xs font-medium"
+              >
+                <span className="line-clamp-1 max-w-[140px]">{p.contentTitle}</span>
+                <span className="flex-shrink-0">— Hari {p.lastReadDay}</span>
+                <ChevronRight className="w-3 h-3 flex-shrink-0" />
+              </Link>
+            ))}
+          </div>
+          <button
+            onClick={() => setDismissed(true)}
+            aria-label="Tutup notifikasi"
+            className="p-1 hover:bg-white/20 rounded-full transition-colors flex-shrink-0 ml-auto"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Subcomponents ──────────────────────────────────────────────────────────────
 
@@ -744,6 +799,7 @@ function NewsletterSection() {
 export default function BerandaPage() {
   return (
     <div>
+      <DevotionNotification />
       <HeroSection />
       <ServicesSection />
       <PembentukanSection />

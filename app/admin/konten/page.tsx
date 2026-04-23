@@ -28,6 +28,7 @@ import {
   Filter,
   BookOpen,
   ClipboardList,
+  CalendarDays,
 } from "lucide-react";
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
@@ -129,14 +130,14 @@ export default function AdminKontenPage() {
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{contents.length} konten total</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <button
+          {/* <button
             onClick={handleSeedStaticData}
             disabled={seeding}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
             {seeding ? "Mengimpor..." : "Impor Data Statis"}
-          </button>
+          </button> */}
           <Link
             href="/admin/konten/baru"
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
@@ -241,7 +242,12 @@ export default function AdminKontenPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      {content.isSteppedContent ? (
+                      {content.isDevotionContent ? (
+                        <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{content.devotionEntries?.length ?? 0} Entri</span>
+                        </div>
+                      ) : content.isSteppedContent ? (
                         <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
                           <Layers className="w-3.5 h-3.5" />
                           <span className="text-xs font-medium">{content.steps?.length ?? 0} Langkah</span>

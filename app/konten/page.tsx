@@ -1,17 +1,153 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart, Layers } from "lucide-react";
+import { BookOpen, Filter, Search, Video, Lock, Star, Users, Play, ShoppingCart, Layers, CalendarDays, CheckCircle, Sun } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { allContents, type Content } from "@/lib/content-data";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getAllDevotionProgress, type DevotionProgress } from "@/lib/progress";
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+}
+
+function daysElapsed(startedAt: string): number {
+  const start = new Date(startedAt);
+  start.setHours(0, 0, 0, 0);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function DevotionSection({ devotionContents, user, openAuthModal }: {
+  devotionContents: Content[];
+  user: { uid?: string } | null;
+  openAuthModal: (redirect?: string) => void;
+}) {
+  const [allProgress, setAllProgress] = useState<DevotionProgress[]>([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    getAllDevotionProgress(user.uid).then(setAllProgress).catch(() => {});
+  }, [user?.uid]);
+
+  if (devotionContents.length === 0) return null;
+
+  const getProgress = (contentId: string) => allProgress.find((p) => p.contentId === contentId) ?? null;
+
+  return (
+    <div className="mb-12">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center flex-shrink-0">
+          <Sun className="w-5 h-5 text-amber-600" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-[var(--foreground)]">Renungan Harian</h2>
+          <p className="text-xs text-[var(--muted-foreground)]">Bacaan spiritual harian — mulai kapanpun, lanjutkan kapanpun</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {devotionContents.map((content) => {
+          const prog = getProgress(content.id);
+          const entries = content.devotionEntries ?? [];
+          const totalDays = entries.length > 0 ? Math.max(...entries.map((e) => e.day)) : 0;
+          const completedCount = prog?.completedDays.length ?? 0;
+          const progressPct = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0;
+          const todayRelativeDay = prog ? daysElapsed(prog.startedAt) + 1 : null;
+          const lastEntry = prog ? entries.find((e) => e.day === prog.lastReadDay) : null;
+
+          return (
+            <div key={content.id} className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CalendarDays className="w-4 h-4 text-amber-100" />
+                      <span className="text-amber-100 text-xs font-semibold uppercase tracking-wider">Renungan Harian</span>
+                    </div>
+                    <h3 className="text-white font-bold text-base leading-snug">{content.title}</h3>
+                    <p className="text-amber-100/80 text-xs mt-1">{totalDays} hari</p>
+                  </div>
+                  {prog && (
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-amber-100 text-[10px]">Progress</p>
+                      <p className="text-white text-2xl font-black leading-none">{progressPct}%</p>
+                      <p className="text-amber-200 text-[10px] mt-0.5">{completedCount}/{totalDays} hari</p>
+                    </div>
+                  )}
+                </div>
+                {/* Progress bar */}
+                {prog && (
+                  <div className="mt-3 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-4 flex-1">
+                {prog ? (
+                  <div className="space-y-2">
+                    {/* Last read / today */}
+                    <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                      <span>Terakhir dibaca: <strong className="text-[var(--foreground)]">Hari {prog.lastReadDay}</strong></span>
+                    </div>
+                    {todayRelativeDay !== null && todayRelativeDay <= totalDays && (
+                      <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                        <Sun className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                        <span>Renungan hari ini: <strong className="text-[var(--foreground)]">Hari {Math.min(todayRelativeDay, totalDays)}</strong></span>
+                      </div>
+                    )}
+                    {lastEntry && (
+                      <p className="text-[var(--foreground)] text-sm font-medium line-clamp-2 mt-2">{lastEntry.title}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[var(--foreground)] text-sm font-medium">Mulai perjalanan renungan harian Anda</p>
+                    <p className="text-[var(--muted-foreground)] text-xs leading-relaxed line-clamp-3 break-words">{content.description}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* CTA */}
+              <div className="px-6 pb-5">
+                {prog ? (
+                  <Link
+                    href={`/konten/${content.slug}?day=${prog.lastReadDay}`}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+                  >
+                    <Sun className="w-4 h-4" /> Lanjutkan — Hari {prog.lastReadDay}
+                  </Link>
+                ) : !user ? (
+                  <button
+                    onClick={() => openAuthModal(`/konten/${content.slug}`)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                  >
+                    <Lock className="w-4 h-4" /> Login untuk Memulai
+                  </button>
+                ) : (
+                  <Link
+                    href={`/konten/${content.slug}`}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+                  >
+                    <Sun className="w-4 h-4" /> Mulai Renungan Harian
+                  </Link>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function KontenPage() {
@@ -34,7 +170,11 @@ export default function KontenPage() {
       });
   }, []);
 
-  const filtered = contents.filter((c) => {
+  // Separate devotion content from regular content
+  const devotionContents = contents.filter((c) => c.isDevotionContent);
+  const regularContents = contents.filter((c) => !c.isDevotionContent);
+
+  const filtered = regularContents.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === "Semua" || c.category === activeCategory;
     const matchType = typeFilter === "Semua Tipe" || (typeFilter === "Video" ? c.type === "video" : c.type === "article");
@@ -124,6 +264,9 @@ export default function KontenPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Renungan Harian Section */}
+        <DevotionSection devotionContents={devotionContents} user={user} openAuthModal={openAuthModal} />
+
         {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="relative flex-1">

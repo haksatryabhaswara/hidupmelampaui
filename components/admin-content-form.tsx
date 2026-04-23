@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type Content, type StepContent, type ContentAccess, type ContentTest, type ContentQuestion, type ContentQuestionOption } from "@/lib/content-data";
+import { type Content, type StepContent, type ContentAccess, type ContentTest, type ContentQuestion, type ContentQuestionOption, type DevotionEntry } from "@/lib/content-data";
 import {
   Plus,
   Trash2,
@@ -17,6 +17,7 @@ import {
   ClipboardList,
   AlignLeft,
   List,
+  CalendarDays,
 } from "lucide-react";
 
 import { RichTextEditor } from "@/components/rich-text-editor";
@@ -80,11 +81,14 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
     body: initial.body ?? "",
     isSteppedContent: initial.isSteppedContent ?? false,
     steps: initial.steps ?? [],
+    isDevotionContent: initial.isDevotionContent ?? false,
+    devotionEntries: initial.devotionEntries ?? [],
     test: initial.test ?? undefined,
   });
 
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [expandedEntry, setExpandedEntry] = useState<number | null>(null);
 
   const set = <K extends keyof ContentFormData>(key: K, value: ContentFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -135,6 +139,36 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       const questions = [...prev.questions];
       questions[idx] = updater(questions[idx]);
       return { ...prev, questions };
+    });
+  };
+
+  const addDevotionEntry = () => {
+    const existingDays = form.devotionEntries?.map((e) => e.day) ?? [];
+    let nextDay = 1;
+    while (existingDays.includes(nextDay) && nextDay <= 366) nextDay++;
+    const newEntry: DevotionEntry = {
+      id: crypto.randomUUID(),
+      day: nextDay <= 366 ? nextDay : 1,
+      title: "",
+      body: "",
+      type: "article",
+      youtubeId: null,
+      access: "free",
+    };
+    setForm((prev) => ({ ...prev, devotionEntries: [...(prev.devotionEntries ?? []), newEntry] }));
+    setExpandedEntry(form.devotionEntries?.length ?? 0);
+  };
+
+  const removeDevotionEntry = (idx: number) => {
+    setForm((prev) => ({ ...prev, devotionEntries: prev.devotionEntries?.filter((_, i) => i !== idx) ?? [] }));
+    setExpandedEntry(null);
+  };
+
+  const setDevotionEntry = (idx: number, key: keyof DevotionEntry, value: unknown) => {
+    setForm((prev) => {
+      const devotionEntries = [...(prev.devotionEntries ?? [])];
+      devotionEntries[idx] = { ...devotionEntries[idx], [key]: value } as DevotionEntry;
+      return { ...prev, devotionEntries };
     });
   };
 
@@ -292,12 +326,12 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
 
         <div>
           <label className={labelClass}>Format Konten</label>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => set("isSteppedContent", false)}
+              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: false }))}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                !form.isSteppedContent
+                !form.isSteppedContent && !form.isDevotionContent
                   ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
                   : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
               }`}
@@ -306,14 +340,25 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
             </button>
             <button
               type="button"
-              onClick={() => set("isSteppedContent", true)}
+              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: true, isDevotionContent: false }))}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                form.isSteppedContent
+                form.isSteppedContent && !form.isDevotionContent
                   ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
                   : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
               }`}
             >
               <Layers className="w-4 h-4" /> Berlangkah (Multi-step)
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: true }))}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                form.isDevotionContent
+                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" /> Renungan Harian
             </button>
           </div>
         </div>
@@ -362,8 +407,174 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
         )}
       </section>
 
-      {/* Content Body / Steps */}
-      {!form.isSteppedContent ? (
+      {/* Content Body / Steps / Devotion Entries */}
+      {form.isDevotionContent ? (
+        <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-[var(--foreground)]">
+              Entri Renungan Harian ({form.devotionEntries?.length ?? 0}/366)
+            </h2>
+            <button
+              type="button"
+              onClick={addDevotionEntry}
+              disabled={(form.devotionEntries?.length ?? 0) >= 366}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-medium hover:bg-[var(--primary)]/20 transition-colors disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4" /> Tambah Entri
+            </button>
+          </div>
+
+          {(form.devotionEntries?.length ?? 0) === 0 && (
+            <p className="text-sm text-[var(--muted-foreground)] text-center py-6">
+              Belum ada entri. Klik &ldquo;Tambah Entri&rdquo; untuk memulai.
+            </p>
+          )}
+
+          <div className="space-y-2">
+            {[...(form.devotionEntries ?? [])]
+              .map((entry, originalIdx) => ({ entry, originalIdx }))
+              .sort((a, b) => a.entry.day - b.entry.day)
+              .map(({ entry, originalIdx: idx }) => (
+                <div key={entry.id} className="border border-[var(--border)] rounded-xl overflow-hidden">
+                  {/* Entry Header */}
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 bg-[var(--muted)]/30 cursor-pointer select-none"
+                    onClick={() => setExpandedEntry(expandedEntry === idx ? null : idx)}
+                  >
+                    <span className="text-xs font-bold text-[var(--primary)] w-16 flex-shrink-0">
+                      Hari {entry.day}
+                    </span>
+                    <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">
+                      {entry.title || "Tanpa judul"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeDevotionEntry(idx); }}
+                        className="p-1 rounded text-[var(--muted-foreground)] hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      {expandedEntry === idx
+                        ? <ChevronUp className="w-4 h-4 text-[var(--muted-foreground)]" />
+                        : <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />}
+                    </div>
+                  </div>
+
+                  {/* Entry Fields */}
+                  {expandedEntry === idx && (
+                    <div className="p-4 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelClass}>Hari ke- (1–366) *</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="366"
+                            required
+                            value={entry.day}
+                            onChange={(e) => setDevotionEntry(idx, "day", parseInt(e.target.value) || 1)}
+                            className={inputClass}
+                          />
+                          <p className="text-xs text-[var(--muted-foreground)] mt-1">Hari 1 = hari pertama pengguna mulai</p>
+                        </div>
+                        <div>
+                          <label className={labelClass}>Judul *</label>
+                          <input
+                            type="text"
+                            required
+                            value={entry.title}
+                            onChange={(e) => setDevotionEntry(idx, "title", e.target.value)}
+                            className={inputClass}
+                            placeholder="Judul renungan hari ini"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        {(["video", "article"] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setDevotionEntry(idx, "type", t)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                              entry.type === t
+                                ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                                : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
+                            }`}
+                          >
+                            {t === "video" ? <Video className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                            {t === "video" ? "Video" : "Artikel"}
+                          </button>
+                        ))}
+                      </div>
+
+                      {entry.type === "video" && (
+                        <div>
+                          <label className={labelClass}>YouTube Video ID</label>
+                          <input
+                            type="text"
+                            value={entry.youtubeId ?? ""}
+                            onChange={(e) => setDevotionEntry(idx, "youtubeId", e.target.value || null)}
+                            className={inputClass}
+                            placeholder="inpok4MKVLM"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-3">
+                        {([
+                          { v: "free", label: "Gratis", icon: Globe },
+                          { v: "login", label: "Wajib Login", icon: LogIn },
+                          { v: "paid", label: "Berbayar", icon: Lock },
+                        ] as const).map(({ v, label, icon: Icon }) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => setDevotionEntry(idx, "access", v)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                              entry.access === v
+                                ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                                : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" /> {label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {entry.access === "paid" && (
+                        <div>
+                          <label className={labelClass}>Harga (IDR)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1000"
+                            value={entry.price ?? ""}
+                            onChange={(e) => setDevotionEntry(idx, "price", parseInt(e.target.value) || undefined)}
+                            className={inputClass}
+                            placeholder="99000"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className={labelClass}>Isi Renungan</label>
+                        <RichTextEditor
+                          key={entry.id}
+                          value={entry.body ?? ""}
+                          onChange={(html) => setDevotionEntry(idx, "body", html)}
+                          placeholder="Tulis renungan hari ini..."
+                          minRows={8}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </section>
+      ) : !form.isSteppedContent ? (
         <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
           <h2 className="font-semibold text-[var(--foreground)]">Isi Konten</h2>
           <RichTextEditor

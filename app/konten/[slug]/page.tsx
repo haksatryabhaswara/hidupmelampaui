@@ -5,11 +5,17 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import {
   ArrowLeft, BookOpen, Play, Lock, ShoppingCart, CheckCircle, ChevronRight,
   Award, Layers, Video, FileText, ClipboardList, AlignLeft, List, Send,
+  CalendarDays, ChevronLeft, ChevronDown, Sun,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { allContents, type Content, type StepContent } from "@/lib/content-data";
+import { allContents, type Content, type StepContent, type DevotionEntry } from "@/lib/content-data";
+import {
+  getDevotionProgress, startDevotionProgress, markDevotionDayRead,
+  type DevotionProgress,
+} from "@/lib/progress";
 import { Certificate } from "@/components/certificate";
+import { DevotionCertificate } from "@/components/devotion-certificate";
 import { useProgress } from "@/lib/progress";
 import { collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -461,6 +467,516 @@ function ContentTestSection({ test, contentId, contentSlug, user }: {
   );
 }
 
+// ─── Devotion helpers ─────────────────────────────────────────────────────────
+
+/** Days elapsed since a startedAt ISO string (0-indexed → day 1 is day 0 elapsed). */
+function daysElapsed(startedAt: string): number {
+  const start = new Date(startedAt);
+  start.setHours(0, 0, 0, 0);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/** Given a startedAt date, returns which "day number" (1-based) today is. */
+function getTodayRelativeDay(startedAt: string): number {
+  return daysElapsed(startedAt) + 1;
+}
+
+function formatDayLabel(day: number): string {
+  return `Hari ke-${day}`;
+}
+
+// ─── DevotionViewer ───────────────────────────────────────────────────────────
+function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }: {
+  content: Content;
+  initialDay: number | null; // null = show start screen first
+  slug: string;
+  user: { uid: string; email?: string | null; displayName?: string | null } | null;
+  openAuthModal: (redirect?: string) => void;
+  paid: Set<string>;
+}) {
+  const entries = content.devotionEntries ?? [];
+
+  const [progress, setProgress] = useState<DevotionProgress | null>(null);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+
+  // Today's calendar date (YYYY-MM-DD) — used for one-day-per-day limit
+  const todayDateStr = new Date().toISOString().split("T")[0];
+
+  // Load progress from Firestore once user is known
+  useEffect(() => {
+    if (!user) { setProgressLoading(false); return; }
+    getDevotionProgress(user.uid, content.id)
+      .then((p) => setProgress(p))
+      .finally(() => setProgressLoading(false));
+  }, [user, content.id]);
+
+  const sortedEntries = [...entries].sort((a, b) => a.day - b.day);
+  const totalDays = sortedEntries.length > 0 ? sortedEntries[sortedEntries.length - 1].day : 0;
+
+  // Today's relative day number based on user's start date
+  const todayRelativeDay = progress ? getTodayRelativeDay(progress.startedAt) : null;
+
+  const completedSet = new Set(progress?.completedDays ?? []);
+  const completedCount = completedSet.size;
+
+  // ── Unlock / lock logic ──────────────────────────────────────────────────
+  // Whether the user has already marked a renungan today
+  const alreadyReadToday = (progress?.lastReadDate === todayDateStr) && completedCount > 0;
+  // Highest day number the user has completed
+  const maxCompletedDay = completedCount > 0 ? Math.max(...(progress?.completedDays ?? [])) : 0;
+  // The furthest day the user may currently access:
+  //   - If already read today → only up to what they've completed (can't advance until tomorrow)
+  //   - Otherwise → next day after the last completed one
+  const maxAccessibleDay = alreadyReadToday ? maxCompletedDay : (maxCompletedDay + 1);
+  // "Focus day": the day to highlight/scroll to and default to on open
+  //   - If already read today → the day they just read
+  //   - Otherwise → the next day to read
+  const focusDay = Math.max(1, Math.min(alreadyReadToday ? maxCompletedDay : maxAccessibleDay, totalDays || 1));
+  const isLocked = (day: number) => day > maxAccessibleDay;
+
+  // Which day is displayed
+  const [selectedDay, setSelectedDay] = useState<number>(initialDay ?? focusDay);
+
+  // Once progress loads, set selectedDay to focusDay (or clamped initialDay)
+  useEffect(() => {
+    if (!progress) return;
+    const ar = (progress.lastReadDate === todayDateStr) && (progress.completedDays.length ?? 0) > 0;
+    const maxComp = progress.completedDays.length > 0 ? Math.max(...progress.completedDays) : 0;
+    const maxAcc = ar ? maxComp : maxComp + 1;
+    const fd = Math.max(1, Math.min(ar ? maxComp : maxAcc, totalDays || 1));
+    if (initialDay !== null) {
+      setSelectedDay(Math.min(initialDay, maxAcc));
+    } else {
+      setSelectedDay(fd);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress]);
+
+  // Auto-scroll the day list to the focused item
+  useEffect(() => {
+    if (!listScrollRef.current) return;
+    const container = listScrollRef.current;
+    const btn = container.querySelector(`[data-day="${focusDay}"]`) as HTMLElement | null;
+    if (!btn) return;
+    container.scrollTop = btn.offsetTop - container.clientHeight / 2 + btn.offsetHeight / 2;
+  }, [focusDay]);
+
+  const entry: DevotionEntry | undefined = entries.find((e) => e.day === selectedDay);
+
+  const navigateToDay = (day: number) => {
+    if (isLocked(day)) return;
+    setSelectedDay(day);
+    window.history.replaceState({}, "", `/konten/${slug}?day=${day}`);
+  };
+
+  const canAccess = (e: DevotionEntry) =>
+    e.access === "free" ||
+    (e.access === "login" && !!user) ||
+    (e.access === "paid" && !!user && paid.has(e.id));
+
+  const handleStart = async () => {
+    if (!user) { openAuthModal(`/konten/${slug}`); return; }
+    setStarting(true);
+    try {
+      const p = await startDevotionProgress(user.uid, content.id, content.slug, content.title);
+      setProgress(p);
+      setSelectedDay(p.lastReadDay);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const handleMarkRead = async (day: number) => {
+    if (!user || !progress) return;
+    await markDevotionDayRead(user.uid, content.id, day);
+    setProgress((prev) => {
+      if (!prev) return prev;
+      const newCompletedDays = prev.completedDays.includes(day)
+        ? prev.completedDays
+        : [...prev.completedDays, day];
+      const newProg: DevotionProgress = {
+        ...prev,
+        lastReadDay: day,
+        completedDays: newCompletedDays,
+        lastReadDate: todayDateStr,
+      };
+      // Show certificate if all days done
+      if (newCompletedDays.length >= totalDays && totalDays > 0) {
+        setShowCertificate(true);
+      }
+      return newProg;
+    });
+  };
+
+  if (progressLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Not started yet ──
+  if (!progress) {
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16">
+          <Link href="/konten" className="inline-flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors text-sm mb-10">
+            <ArrowLeft className="w-4 h-4" /> Kembali ke Konten
+          </Link>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-8 text-center space-y-6">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mx-auto shadow-lg">
+              <Sun className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <span className="text-amber-600 text-xs font-semibold uppercase tracking-wider">{content.category} · Renungan Harian</span>
+              <h1 className="text-2xl font-bold text-[var(--foreground)] mt-2">{content.title}</h1>
+              <p className="text-[var(--muted-foreground)] text-sm mt-2 leading-relaxed">{content.description}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-white/70 dark:bg-white/5 rounded-xl p-3">
+                <p className="text-2xl font-black text-amber-600">{totalDays}</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-0.5">Total Hari</p>
+              </div>
+              <div className="bg-white/70 dark:bg-white/5 rounded-xl p-3">
+                <p className="text-2xl font-black text-amber-600">1</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-0.5">Mulai dari Hari</p>
+              </div>
+              <div className="bg-white/70 dark:bg-white/5 rounded-xl p-3">
+                <p className="text-2xl font-black text-amber-600">∞</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-0.5">Lanjutkan Kapanpun</p>
+              </div>
+            </div>
+            <p className="text-sm text-[var(--muted-foreground)] max-w-sm mx-auto">
+              Mulai hari ini sebagai <strong>Hari 1</strong>. Progress Anda tersimpan otomatis sehingga bisa dilanjutkan kapanpun.
+            </p>
+            {!user ? (
+              <button
+                onClick={() => openAuthModal(`/konten/${slug}`)}
+                className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+              >
+                <Lock className="w-4 h-4" /> Login untuk Memulai
+              </button>
+            ) : (
+              <button
+                onClick={handleStart}
+                disabled={starting}
+                className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-8 py-3 rounded-xl transition-colors text-sm disabled:opacity-60"
+              >
+                <Sun className="w-4 h-4" />
+                {starting ? "Memulai..." : "Mulai Renungan Harian"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Active viewer ──
+  const progressPct = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0;
+
+  return (
+    <div className="min-h-screen bg-[var(--background)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Link href="/konten" className="inline-flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors text-sm mb-6">
+          <ArrowLeft className="w-4 h-4" /> Kembali ke Konten
+        </Link>
+
+        {/* Series header */}
+        <div className="bg-gradient-to-r from-amber-600 to-orange-500 text-white rounded-2xl px-6 py-5 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Sun className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-amber-100 text-xs font-semibold uppercase tracking-wider">{content.category}</span>
+                <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-medium">
+                  Renungan Harian · {totalDays} hari
+                </span>
+                {todayRelativeDay !== null && (
+                  <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-medium">
+                    Hari ini: Hari {Math.min(todayRelativeDay, totalDays)}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold mb-1">{content.title}</h1>
+              {/* Progress bar */}
+              <div className="mt-3 space-y-1">
+                <div className="flex justify-between text-xs text-amber-100/80">
+                  <span>{completedCount}/{totalDays} hari dibaca</span>
+                  <span>{progressPct}%</span>
+                </div>
+                <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-6">
+          {/* Sidebar */}
+          <div className="space-y-3">
+            {/* Focus-day shortcut */}
+            {alreadyReadToday ? (
+              <div className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                <span>Dibaca hari ini — {formatDayLabel(maxCompletedDay)}</span>
+                <span className="ml-auto text-xs opacity-70">Kembali besok</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigateToDay(focusDay)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                  selectedDay === focusDay
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300"
+                    : "border-[var(--border)] bg-[var(--card)] hover:border-amber-400/60 text-[var(--foreground)]"
+                }`}
+              >
+                <Sun className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <span>{completedCount > 0 ? "Lanjutkan" : "Mulai dari"} — {formatDayLabel(focusDay)}</span>
+                <ChevronRight className="w-4 h-4 text-amber-500 ml-auto flex-shrink-0" />
+              </button>
+            )}
+
+            {/* Day list */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+              <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider px-4 py-3 border-b border-[var(--border)]">
+                Semua Hari
+              </p>
+              <div ref={listScrollRef} className="max-h-[420px] overflow-y-auto p-2 space-y-1">
+                {sortedEntries.map((e) => {
+                  const isDone = completedSet.has(e.day);
+                  const locked = isLocked(e.day);
+                  const isFocus = e.day === focusDay && !isDone;
+                  return (
+                    <button
+                      key={e.id}
+                      data-day={e.day}
+                      onClick={() => navigateToDay(e.day)}
+                      disabled={locked}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-all text-xs flex items-center gap-2 ${
+                        e.day === selectedDay
+                          ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 font-semibold"
+                          : locked
+                            ? "opacity-35 cursor-not-allowed text-[var(--muted-foreground)]"
+                            : isFocus
+                              ? "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300"
+                              : "hover:bg-[var(--muted)] text-[var(--foreground)]"
+                      }`}
+                    >
+                      {locked
+                        ? <Lock className="w-3.5 h-3.5 flex-shrink-0 opacity-40" />
+                        : isDone
+                          ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          : isFocus
+                            ? <Sun className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                            : <span className="w-3.5 h-3.5 rounded-full border border-amber-400 flex-shrink-0" />
+                      }
+                      <span className="font-bold text-amber-600 dark:text-amber-400 min-w-[3rem]">Hari {e.day}</span>
+                      <span className="line-clamp-1 flex-1">{e.title}</span>
+                      {isFocus && (
+                        <span className="ml-auto flex-shrink-0 text-[9px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">NEXT</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Prev / Next */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const prev = sortedEntries.filter((e) => e.day < selectedDay).pop();
+                  if (prev) navigateToDay(prev.day);
+                }}
+                disabled={!sortedEntries.some((e) => e.day < selectedDay)}
+                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl border border-[var(--border)] text-sm text-[var(--muted-foreground)] hover:bg-[var(--muted)] disabled:opacity-40 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" /> Sebelumnya
+              </button>
+              <button
+                onClick={() => {
+                  const next = sortedEntries.find((e) => e.day > selectedDay);
+                  if (next && !isLocked(next.day)) navigateToDay(next.day);
+                }}
+                disabled={(() => { const n = sortedEntries.find((e) => e.day > selectedDay); return !n || isLocked(n.day); })()}
+                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl border border-[var(--border)] text-sm text-[var(--muted-foreground)] hover:bg-[var(--muted)] disabled:opacity-40 transition-colors"
+              >
+                Berikutnya <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main content area */}
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+            {!entry ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
+                <CalendarDays className="w-14 h-14 text-amber-300" />
+                <h3 className="text-lg font-bold text-[var(--foreground)]">Tidak ada renungan untuk {formatDayLabel(selectedDay)}</h3>
+                <button
+                  onClick={() => navigateToDay(progress.lastReadDay)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold transition-colors"
+                >
+                  <Sun className="w-4 h-4" /> Kembali ke Posisi Terakhir
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Entry header */}
+                <div className="p-6 border-b border-[var(--border)] bg-amber-50/50 dark:bg-amber-950/10">
+                  <div className="flex items-center flex-wrap gap-2 mb-2">
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                      {formatDayLabel(entry.day)}
+                    </span>
+                    {entry.day === todayRelativeDay && (
+                      <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
+                        <Sun className="w-3 h-3" /> Hari Ini
+                      </span>
+                    )}
+                    {completedSet.has(entry.day) && (
+                      <span className="flex items-center gap-1 text-xs bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">
+                        <CheckCircle className="w-3 h-3" /> Sudah Dibaca
+                      </span>
+                    )}
+                    {entry.type === "video"
+                      ? <span className="flex items-center gap-1 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full"><Video className="w-3 h-3" /> Video</span>
+                      : <span className="flex items-center gap-1 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full"><FileText className="w-3 h-3" /> Artikel</span>
+                    }
+                  </div>
+                  <h2 className="text-xl font-bold text-[var(--foreground)]">{entry.title}</h2>
+                </div>
+
+                {/* Entry body */}
+                <div className="p-6">
+                  {!canAccess(entry) ? (
+                    <div className="my-4 text-center space-y-4 py-8">
+                      {entry.access === "login" ? (
+                        <>
+                          <Lock className="w-10 h-10 text-blue-500 mx-auto" />
+                          <h3 className="text-lg font-bold text-[var(--foreground)]">Login Diperlukan</h3>
+                          <p className="text-[var(--muted-foreground)] text-sm">Renungan ini gratis — cukup login untuk membaca.</p>
+                          <button
+                            onClick={() => openAuthModal(`/konten/${slug}?day=${selectedDay}`)}
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+                          >
+                            Masuk / Daftar Gratis
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-10 h-10 text-amber-500 mx-auto" />
+                          <h3 className="text-lg font-bold text-[var(--foreground)]">Renungan Berbayar</h3>
+                          <p className="text-[var(--muted-foreground)] text-sm">Beli untuk membuka akses renungan ini.</p>
+                          {entry.price && <p className="text-3xl font-bold text-amber-600">{String(entry.price).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</p>}
+                          {!user ? (
+                            <button onClick={() => openAuthModal(`/konten/${slug}?day=${selectedDay}`)}
+                              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-bold px-6 py-2.5 rounded-xl transition-colors">
+                              <Lock className="w-4 h-4" /> Login untuk Membeli
+                            </button>
+                          ) : (
+                            <button className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-bold px-8 py-3 rounded-xl transition-colors">
+                              <ShoppingCart className="w-4 h-4" /> Beli Renungan
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {entry.type === "video" && entry.youtubeId && (
+                        <div className="aspect-video bg-slate-900 rounded-xl overflow-hidden mb-6">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${entry.youtubeId}?rel=0&modestbranding=1`}
+                            title={entry.title}
+                            className="w-full h-full"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      {entry.body && <HtmlBody html={entry.body} />}
+                      {!entry.body && !entry.youtubeId && (
+                        <p className="text-[var(--muted-foreground)] text-sm italic text-center py-8">
+                          Konten renungan belum tersedia.
+                        </p>
+                      )}
+
+                      {/* Mark as read button */}
+                      {user && !completedSet.has(entry.day) && (
+                        <div className="mt-8 flex flex-col items-center gap-2">
+                          <button
+                            onClick={() => void handleMarkRead(entry.day)}
+                            disabled={alreadyReadToday}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+                          >
+                            <CheckCircle className="w-4 h-4" /> Tandai Sudah Dibaca
+                          </button>
+                          {alreadyReadToday && (
+                            <p className="text-xs text-[var(--muted-foreground)] text-center max-w-xs">
+                              Anda sudah membaca satu renungan hari ini. Kembali lagi besok untuk melanjutkan.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Next day button — only shown if next day is accessible */}
+                      {completedSet.has(entry.day) && (() => {
+                        const next = sortedEntries.find((e) => e.day > entry.day);
+                        if (!next || isLocked(next.day)) return null;
+                        return (
+                          <div className="mt-8 flex justify-end">
+                            <button
+                              onClick={() => navigateToDay(next.day)}
+                              className="flex items-center gap-2 bg-[var(--primary)] hover:opacity-90 text-white font-semibold px-5 py-2.5 rounded-xl transition-opacity text-sm"
+                            >
+                              Renungan Berikutnya <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Certificate button when all days completed */}
+                      {completedCount >= totalDays && totalDays > 0 && (
+                        <div className="mt-6 flex justify-center">
+                          <button
+                            onClick={() => setShowCertificate(true)}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-sm transition-all shadow-md"
+                          >
+                            <Award className="w-4 h-4" /> Lihat Sertifikat Penyelesaian
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Certificate modal */}
+      {showCertificate && user && (
+        <DevotionCertificate
+          userName={user.displayName ?? user.email ?? "Pengguna"}
+          contentTitle={content.title}
+          totalDays={totalDays}
+          completedAt={progress?.startedAt ?? new Date().toISOString()}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Main page
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -518,8 +1034,17 @@ function KontenDetailPageContent() {
   );
   const [showCertificate, setShowCertificate] = useState(false);
 
+  // For devotion content — day from ?day= param or null (show progress-based default)
+  const rawDay = searchParams?.get("day");
+  const initialDay: number | null = (() => {
+    if (!rawDay) return null;
+    const d = parseInt(rawDay);
+    if (isNaN(d)) return null;
+    return Math.min(366, Math.max(1, d));
+  })();
+
   useEffect(() => {
-    if (!loading && !user && content && !content.isSteppedContent && content.access !== "free") {
+    if (!loading && !user && content && !content.isSteppedContent && !content.isDevotionContent && content.access !== "free") {
       openAuthModal(`/konten/${slug}`);
     }
   }, [loading, user, content, slug, openAuthModal]);
@@ -537,6 +1062,22 @@ function KontenDetailPageContent() {
           <Link href="/konten" className="text-[var(--primary)] hover:underline">← Kembali ke daftar konten</Link>
         </div>
       </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // DEVOTION CONTENT (Renungan Harian)
+  // ───────────────────────────────────────────────────────────────────────────
+  if (content.isDevotionContent) {
+    return (
+      <DevotionViewer
+        content={content}
+        initialDay={initialDay}
+        slug={slug}
+        user={user}
+        openAuthModal={openAuthModal}
+        paid={paid}
+      />
     );
   }
 

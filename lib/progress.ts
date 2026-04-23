@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { User } from "firebase/auth";
-import { doc, getDoc, updateDoc, setDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -11,6 +11,21 @@ type ProgressStore = {
   completed: Record<string, string>; // contentId / stepId → ISO date
   started: Record<string, string>;   // contentId → ISO date of first visit
   paid: string[];
+};
+
+/** Stored per-user per-devotion-content document in Firestore: progress/{uid}/devotion/{contentId} */
+export type DevotionProgress = {
+  contentId: string;
+  contentSlug: string;
+  contentTitle: string;
+  /** ISO date string of when the user first started this devotion series */
+  startedAt: string;
+  /** The last day number the user opened/read */
+  lastReadDay: number;
+  /** Set of day numbers the user has marked as read */
+  completedDays: number[];
+  /** YYYY-MM-DD of the last calendar day a day was marked read — enforces one-day-per-calendar-day limit */
+  lastReadDate?: string;
 };
 
 // ─── localStorage (guest fallback) ───────────────────────────────────────────
@@ -95,6 +110,68 @@ async function fsMarkPaid(uid: string, id: string): Promise<void> {
     await updateDoc(progressRef(uid), { paid: arrayUnion(id) });
   } catch {
     await setDoc(progressRef(uid), { completed: {}, started: {}, paid: [id] });
+  }
+}
+
+// ─── Devotion progress (Firestore only — requires login) ─────────────────────
+
+function devotionRef(uid: string, contentId: string) {
+  return doc(db, "progress", uid, "devotion", contentId);
+}
+
+export async function getDevotionProgress(uid: string, contentId: string): Promise<DevotionProgress | null> {
+  try {
+    const snap = await getDoc(devotionRef(uid, contentId));
+    if (snap.exists()) return snap.data() as DevotionProgress;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAllDevotionProgress(uid: string): Promise<DevotionProgress[]> {
+  try {
+    const snap = await getDocs(collection(db, "progress", uid, "devotion"));
+    return snap.docs.map((d) => d.data() as DevotionProgress);
+  } catch {
+    return [];
+  }
+}
+
+export async function startDevotionProgress(
+  uid: string,
+  contentId: string,
+  contentSlug: string,
+  contentTitle: string,
+): Promise<DevotionProgress> {
+  const existing = await getDevotionProgress(uid, contentId);
+  if (existing) return existing;
+  const prog: DevotionProgress = {
+    contentId,
+    contentSlug,
+    contentTitle,
+    startedAt: new Date().toISOString(),
+    lastReadDay: 1,
+    completedDays: [],
+  };
+  await setDoc(devotionRef(uid, contentId), prog);
+  return prog;
+}
+
+export async function markDevotionDayRead(
+  uid: string,
+  contentId: string,
+  day: number,
+): Promise<void> {
+  const todayDate = new Date().toISOString().split("T")[0];
+  try {
+    await updateDoc(devotionRef(uid, contentId), {
+      lastReadDay: day,
+      completedDays: arrayUnion(day),
+      lastReadDate: todayDate,
+    });
+  } catch {
+    // doc may not exist yet — ignore silently; caller should startDevotionProgress first
   }
 }
 
