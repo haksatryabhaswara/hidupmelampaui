@@ -503,6 +503,7 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
   const [starting, setStarting] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Today's calendar date (YYYY-MM-DD) — used for one-day-per-day limit
   const todayDateStr = new Date().toISOString().split("T")[0];
@@ -611,6 +612,10 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
       }
       return newProg;
     });
+    // Scroll to the sidebar so the user sees the updated list
+    setTimeout(() => {
+      sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
   };
 
   if (progressLoading) {
@@ -723,7 +728,7 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-6">
           {/* Sidebar */}
-          <div className="space-y-3">
+          <div ref={sidebarRef} className="space-y-3">
             {/* Focus-day shortcut */}
             {alreadyReadToday ? (
               <div className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
