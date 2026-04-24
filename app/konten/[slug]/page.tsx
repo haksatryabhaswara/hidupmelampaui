@@ -59,13 +59,31 @@ function sanitizeHtml(html: string) {
     .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, "");
 }
 
+/** Returns true if a string contains HTML tags. */
+function isHtml(str: string): boolean {
+  return /<[a-z][\s\S]*?>/i.test(str);
+}
+
 function HtmlBody({ html }: { html: string }) {
   return (
     <div
-      className="prose prose-sm max-w-none text-[var(--muted-foreground)] [&_h1]:text-[var(--foreground)] [&_h2]:text-[var(--foreground)] [&_h3]:text-[var(--foreground)] [&_h4]:text-[var(--foreground)] [&_strong]:text-[var(--foreground)] [&_a]:text-[var(--primary)] [&_blockquote]:border-[var(--primary)] [&_hr]:border-[var(--border)]"
+      className="rte-view text-[var(--muted-foreground)] leading-relaxed"
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
     />
   );
+}
+
+/** Renders description as rich HTML if it contains tags, plain text otherwise. */
+function Description({ text, className }: { text: string; className?: string }) {
+  if (isHtml(text)) {
+    return (
+      <div
+        className={`rte-view text-[var(--muted-foreground)] leading-relaxed text-sm ${className ?? ""}`}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }}
+      />
+    );
+  }
+  return <p className={`text-[var(--muted-foreground)] ${className ?? ""}`}>{text}</p>;
 }
 
 // ─── YouTube player hook ──────────────────────────────────────────────────────
@@ -173,18 +191,24 @@ function ArticleSection({ body, itemId, onComplete, alreadyDone }: {
       <HtmlBody html={body} />
       <div ref={endRef} className="h-1" />
       {!alreadyDone && (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-10 flex flex-col items-center gap-3">
+          {!reached && (
+            <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--muted-foreground)] animate-bounce" />
+              Gulir ke bawah untuk membuka tombol
+            </p>
+          )}
           <button
-            onClick={onComplete}
+            onClick={() => { onComplete(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             disabled={!reached}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+            className={`group relative flex items-center gap-3 px-8 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 ${
               reached
-                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg"
-                : "bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95"
+                : "bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed opacity-60"
             }`}
           >
-            <CheckCircle className="w-4 h-4" />
-            {reached ? "Tandai Selesai Membaca" : "Gulir ke bawah untuk menyelesaikan"}
+            <CheckCircle className={`w-5 h-5 transition-transform duration-200 ${reached ? "group-hover:scale-110" : ""}`} />
+            Selesai Membaca
           </button>
         </div>
       )}
@@ -641,7 +665,7 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
             <div>
               <span className="text-amber-600 text-xs font-semibold uppercase tracking-wider">{content.category} · Renungan Harian</span>
               <h1 className="text-2xl font-bold text-[var(--foreground)] mt-2">{content.title}</h1>
-              <p className="text-[var(--muted-foreground)] text-sm mt-2 leading-relaxed">{content.description}</p>
+              <Description text={content.description} className="text-sm mt-2 leading-relaxed" />
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-white/70 dark:bg-white/5 rounded-xl p-3">
@@ -916,16 +940,16 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
 
                       {/* Mark as read button */}
                       {user && !completedSet.has(entry.day) && (
-                        <div className="mt-8 flex flex-col items-center gap-2">
+                        <div className="mt-10 flex flex-col items-center gap-3">
                           <button
-                            onClick={() => void handleMarkRead(entry.day)}
+                            onClick={() => { void handleMarkRead(entry.day); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                             disabled={alreadyReadToday}
-                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+                            className="group flex items-center gap-3 px-8 py-3.5 rounded-2xl font-semibold text-sm bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white shadow-lg hover:shadow-amber-500/30 hover:scale-105 active:scale-95 transition-all duration-200"
                           >
-                            <CheckCircle className="w-4 h-4" /> Tandai Sudah Dibaca
+                            <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" /> Tandai Sudah Dibaca
                           </button>
                           {alreadyReadToday && (
-                            <p className="text-xs text-[var(--muted-foreground)] text-center max-w-xs">
+                            <p className="text-xs text-[var(--muted-foreground)] text-center max-w-xs bg-[var(--muted)] rounded-xl px-4 py-2">
                               Anda sudah membaca satu renungan hari ini. Kembali lagi besok untuk melanjutkan.
                             </p>
                           )}
@@ -1143,7 +1167,7 @@ function KontenDetailPageContent() {
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)] mb-2">{content.title}</h1>
-                <p className="text-[var(--muted-foreground)] text-sm mb-4">{content.description}</p>
+                <Description text={content.description} className="text-sm mb-4" />
                 <ProgressBar done={completedCount} total={steps.length} />
               </div>
             </div>
@@ -1270,10 +1294,10 @@ function KontenDetailPageContent() {
                             </p>
                             <div className="flex justify-center">
                               <button
-                                onClick={() => handleMarkDone(activeStep.id)}
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--foreground)] transition-colors"
+                                onClick={() => { handleMarkDone(activeStep.id); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                                className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200"
                               >
-                                <CheckCircle className="w-4 h-4" /> Tandai sudah ditonton
+                                <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" /> Selesai Ditonton
                               </button>
                             </div>
                           </>
@@ -1428,6 +1452,15 @@ function KontenDetailPageContent() {
             </div>
           )}
 
+          {content.coverImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={content.coverImage}
+              alt={content.title}
+              className="w-full max-h-72 object-cover"
+            />
+          )}
+
           {canAccess && content.type === "video" && content.youtubeId && !alreadyDone && (
             <SingleVideoSetup youtubeId={content.youtubeId} contentId={content.id} onComplete={handleSingleComplete} />
           )}
@@ -1448,7 +1481,7 @@ function KontenDetailPageContent() {
             </div>
 
             <h1 className="text-2xl md:text-3xl font-bold text-[var(--foreground)] mb-3">{content.title}</h1>
-            <p className="text-[var(--muted-foreground)] mb-6">{content.description}</p>
+            <Description text={content.description} className="mb-6" />
 
             <div className="flex flex-wrap gap-4 text-sm text-[var(--muted-foreground)] pb-6 border-b border-[var(--border)]">
               <span>Instruktur: <strong className="text-[var(--foreground)]">{content.instructor}</strong></span>
@@ -1495,10 +1528,11 @@ function KontenDetailPageContent() {
                 <div className="pt-6">
                   <HtmlBody html={content.body} />
                   {!alreadyDone && (
-                    <div className="mt-6 flex justify-center">
-                      <button onClick={handleSingleComplete}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--foreground)] transition-colors">
-                        <CheckCircle className="w-4 h-4" /> Tandai sudah ditonton
+                    <div className="mt-8 flex justify-center">
+                      <button
+                        onClick={() => { handleSingleComplete(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="group flex items-center gap-3 px-8 py-3.5 rounded-2xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200">
+                        <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" /> Selesai Ditonton
                       </button>
                     </div>
                   )}

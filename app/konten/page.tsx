@@ -335,6 +335,18 @@ export default function KontenPage() {
                       <Layers className="w-12 h-12 text-indigo-300/70" />
                       <p className="text-indigo-200/70 text-xs font-medium">{content.steps?.length ?? 0} Langkah</p>
                     </div>
+                  ) : content.coverImage ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={content.coverImage} alt={content.title} className="w-full h-full object-cover" />
+                      {content.type === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+                            <Play className="w-5 h-5 text-white ml-0.5" />
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : content.access === "free" && content.type === "video" && content.youtubeId ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${content.youtubeId}`}

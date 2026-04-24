@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { type Content, type StepContent, type ContentAccess, type ContentTest, type ContentQuestion, type ContentQuestionOption, type DevotionEntry } from "@/lib/content-data";
 import {
   Plus,
@@ -18,7 +18,12 @@ import {
   AlignLeft,
   List,
   CalendarDays,
+  ImagePlus,
+  X,
+  Loader2,
 } from "lucide-react";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 import { RichTextEditor } from "@/components/rich-text-editor";
 
@@ -79,6 +84,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
     duration: initial.duration ?? "",
     instructor: initial.instructor ?? "Dr. Heru K. Wibawa",
     body: initial.body ?? "",
+    coverImage: initial.coverImage ?? null,
     isSteppedContent: initial.isSteppedContent ?? false,
     steps: initial.steps ?? [],
     isDevotionContent: initial.isDevotionContent ?? false,
@@ -89,6 +95,28 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [expandedEntry, setExpandedEntry] = useState<number | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverUploadProgress, setCoverUploadProgress] = useState(0);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverUpload = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    setCoverUploading(true);
+    setCoverUploadProgress(0);
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storageRef = ref(storage, `covers/${file.size}-${file.lastModified}-${safeName}`);
+    const task = uploadBytesResumable(storageRef, file);
+    task.on(
+      "state_changed",
+      (snap) => setCoverUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      () => { setCoverUploading(false); alert("Gagal mengunggah gambar. Coba lagi."); },
+      () => {
+        getDownloadURL(task.snapshot.ref)
+          .then((url) => { set("coverImage", url); })
+          .finally(() => setCoverUploading(false));
+      }
+    );
+  };
 
   const set = <K extends keyof ContentFormData>(key: K, value: ContentFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -224,14 +252,68 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
 
         <div>
           <label className={labelClass}>Deskripsi *</label>
-          <textarea
-            required
-            rows={2}
+          <RichTextEditor
             value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            className={inputClass + " resize-none"}
+            onChange={(html) => set("description", html)}
             placeholder="Deskripsi singkat konten"
+            minRows={3}
           />
+        </div>
+
+        {/* Cover Image */}
+        <div>
+          <label className={labelClass}>Gambar Cover</label>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }}
+          />
+          {form.coverImage ? (
+            <div className="relative group w-full rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--muted)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={form.coverImage} alt="Cover" className="w-full max-h-52 object-cover" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="flex items-center gap-1.5 bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <ImagePlus className="w-3.5 h-3.5" /> Ganti
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set("coverImage", null)}
+                  className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-400 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" /> Hapus
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={coverUploading}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleCoverUpload(f); }}
+              className="w-full border-2 border-dashed border-[var(--border)] rounded-lg py-8 flex flex-col items-center gap-2 text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {coverUploading ? (
+                <>
+                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <span className="text-sm">{coverUploadProgress}%</span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="w-7 h-7" />
+                  <span className="text-sm font-medium">Klik atau seret gambar ke sini</span>
+                  <span className="text-xs">JPG, PNG, WebP — maks 5 MB</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -621,6 +703,15 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
                     {step.title || "Tanpa judul"}
                   </span>
                   <div className="flex items-center gap-2">
+                    {step.access === "free" && (
+                      <span className="hidden sm:inline text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded">Gratis</span>
+                    )}
+                    {step.access === "login" && (
+                      <span className="hidden sm:inline text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded">Login</span>
+                    )}
+                    {step.access === "paid" && (
+                      <span className="hidden sm:inline text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">Berbayar</span>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeStep(idx); }}

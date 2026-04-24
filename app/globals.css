@@ -67,3 +67,85 @@ html {
   border-radius: 3px;
 }
 
+/* ─── Rich-text view (rendered HTML content) ─────────────────────────────── */
+.rte-view { max-width: none; }
+
+.rte-view h1 {
+  font-size: 1.875rem; font-weight: 800; line-height: 1.2;
+  margin: 1.5rem 0 0.6rem;
+  color: var(--foreground);
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary);
+}
+.rte-view h2 {
+  font-size: 1.375rem; font-weight: 700; line-height: 1.3;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--foreground);
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--primary);
+}
+.rte-view h3 {
+  font-size: 1.125rem; font-weight: 600; line-height: 1.4;
+  margin: 1rem 0 0.4rem;
+  color: var(--primary);
+}
+.rte-view h4 {
+  font-size: 1rem; font-weight: 600; line-height: 1.4;
+  margin: 0.875rem 0 0.35rem;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--muted-foreground);
+  text-underline-offset: 3px;
+}
+.rte-view p { margin: 0.5rem 0; }
+.rte-view ul { list-style: disc; margin: 0.75rem 0 0.75rem 1.5rem; }
+.rte-view ol { list-style: decimal; margin: 0.75rem 0 0.75rem 1.5rem; }
+.rte-view li { margin: 0.3rem 0; }
+.rte-view ul ul, .rte-view ol ul { list-style: circle; margin-left: 1.25rem; }
+.rte-view ul ul ul { list-style: square; }
+.rte-view blockquote {
+  border-left: 4px solid var(--primary);
+  margin: 1rem 0;
+  padding: 0.625rem 1rem;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+.rte-view pre {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.65;
+}
+.rte-view code {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+.rte-view pre code { background: none; border: none; padding: 0; font-size: inherit; }
+.rte-view a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rte-view a:hover { opacity: 0.75; }
+.rte-view strong { font-weight: 700; color: var(--foreground); }
+.rte-view em { font-style: italic; }
+.rte-view u { text-underline-offset: 3px; }
+.rte-view s { opacity: 0.6; }
+.rte-view hr { border: none; border-top: 2px solid var(--border); margin: 1.5rem 0; }
+.rte-view img { max-width: 100%; border-radius: 10px; margin: 0.75rem 0; }
+.rte-view sup, .rte-view sub { font-size: 0.72em; }
+.rte-view table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+.rte-view th, .rte-view td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
+.rte-view th { background: var(--muted); font-weight: 600; color: var(--foreground); }
+

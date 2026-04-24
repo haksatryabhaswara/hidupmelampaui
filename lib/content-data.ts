@@ -56,6 +56,8 @@ export type Content = {
   category: string;
   type: "video" | "article";
   youtubeId: string | null;
+  /** Optional cover image URL (Firebase Storage download URL) */
+  coverImage?: string | null;
   /** free = anyone, login = must be signed in, paid = must purchase */
   access: ContentAccess;
   /** price in IDR — required when access === "paid" */
