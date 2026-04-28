@@ -1,17 +1,19 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
 import {
   ArrowLeft, BookOpen, Play, Lock, ShoppingCart, CheckCircle, ChevronRight,
   Award, Layers, Video, FileText, ClipboardList, AlignLeft, List, Send,
-  CalendarDays, ChevronLeft, ChevronDown, Sun,
+  CalendarDays, ChevronLeft, ChevronDown, Sun, Bookmark,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { allContents, type Content, type StepContent, type DevotionEntry } from "@/lib/content-data";
 import {
   getDevotionProgress, startDevotionProgress, markDevotionDayRead,
+  getLastReadStep, saveLastReadStep,
+  getLastReadHeading, saveLastReadHeading, clearLastReadHeading,
   type DevotionProgress,
 } from "@/lib/progress";
 import { Certificate } from "@/components/certificate";
@@ -69,6 +71,23 @@ function HtmlBody({ html }: { html: string }) {
     <div
       className="rte-view text-[var(--muted-foreground)] leading-relaxed"
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
+    />
+  );
+}
+
+/** Like HtmlBody but also injects unique id attrs on h1–h4 and optionally reports them. */
+function HtmlBodyWithHeadingIds({ html, onHeadings }: { html: string; onHeadings?: (h: TocHeading[]) => void }) {
+  const { html: processedHtml, headings } = useMemo(
+    () => injectHeadingIds(sanitizeHtml(html)),
+    [html],
+  );
+  const onHeadingsRef = useRef(onHeadings);
+  useEffect(() => { onHeadingsRef.current = onHeadings; });
+  useEffect(() => { onHeadingsRef.current?.(headings); }, [headings]);
+  return (
+    <div
+      className="rte-view text-[var(--muted-foreground)] leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
   );
 }
@@ -182,13 +201,21 @@ function VideoSection({ youtubeId, itemId, onComplete, alreadyDone }: {
 }
 
 // ─── ArticleSection ───────────────────────────────────────────────────────────
-function ArticleSection({ body, itemId, onComplete, alreadyDone }: {
+function ArticleSection({ body, itemId, onComplete, alreadyDone, onHeadings }: {
   body: string; itemId: string; onComplete: () => void; alreadyDone: boolean;
+  onHeadings?: (h: TocHeading[]) => void;
 }) {
   const { endRef, reached } = useScrolledToEnd(itemId);
+  const { html: processedHtml, headings } = useMemo(
+    () => injectHeadingIds(sanitizeHtml(body)),
+    [body],
+  );
+  const onHeadingsRef = useRef(onHeadings);
+  useEffect(() => { onHeadingsRef.current = onHeadings; });
+  useEffect(() => { onHeadingsRef.current?.(headings); }, [headings]);
   return (
     <div>
-      <HtmlBody html={body} />
+      <div className="rte-view text-[var(--muted-foreground)] leading-relaxed" dangerouslySetInnerHTML={{ __html: processedHtml }} />
       <div ref={endRef} className="h-1" />
       {!alreadyDone && (
         <div className="mt-10 flex flex-col items-center gap-3">
@@ -308,6 +335,251 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
         <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
     </div>
+  );
+}
+
+// ─── Table of Contents ────────────────────────────────────────────────────────
+interface TocHeading {
+  id: string;
+  text: string;
+  level: 1 | 2 | 3 | 4;
+}
+
+function slugifyId(text: string, idx: number): string {
+  const s = text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return s || `heading-${idx}`;
+}
+
+interface TocNode extends TocHeading {
+  children: TocNode[];
+}
+
+/** Builds a tree from a flat headings list so h2 nests under h1, h3 under h2, etc. */
+function buildTree(headings: TocHeading[]): TocNode[] {
+  const roots: TocNode[] = [];
+  const stack: TocNode[] = [];
+  for (const h of headings) {
+    const node: TocNode = { ...h, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1].level >= h.level) {
+      stack.pop();
+    }
+    if (stack.length === 0) {
+      roots.push(node);
+    } else {
+      stack[stack.length - 1].children.push(node);
+    }
+    stack.push(node);
+  }
+  return roots;
+}
+
+/** Injects unique `id` attributes into h1–h4 tags and returns the heading list. */
+function injectHeadingIds(html: string): { html: string; headings: TocHeading[] } {
+  const headings: TocHeading[] = [];
+  const seen: Record<string, number> = {};
+  const processed = html.replace(
+    /<(h[1-4])((?:\s[^>]*)?)>([\s\S]*?)<\/\1>/gi,
+    (_m, tag: string, attrs: string, inner: string) => {
+      const level = +tag[1] as 1 | 2 | 3 | 4;
+      const text = inner.replace(/<[^>]+>/g, "").trim();
+      let id = slugifyId(text, headings.length);
+      if (seen[id] !== undefined) { seen[id]++; id = `${id}-${seen[id]}`; } else { seen[id] = 0; }
+      const newAttrs = /\bid\s*=/.test(attrs) ? attrs : `${attrs} id="${id}"`;
+      headings.push({ id, text, level });
+      return `<${tag}${newAttrs}>${inner}</${tag}>`;
+    },
+  );
+  return { html: processed, headings };
+}
+
+function TableOfContents({ headings, savedHeadingId, onMark }: {
+  headings: TocHeading[];
+  savedHeadingId?: string | null;
+  onMark?: (id: string | null) => void;
+}) {
+  const [activeId, setActiveId] = useState<string>("");
+  const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
+  const [headingsKey, setHeadingsKey] = useState(() => headings.map(h => h.id).join(","));
+
+  // Reset per-node collapse state when the heading set changes (e.g. new step loaded)
+  const newKey = headings.map(h => h.id).join(",");
+  if (headingsKey !== newKey) {
+    setHeadingsKey(newKey);
+    setCollapsedNodes(new Set());
+  }
+
+  const tree = useMemo(() => buildTree(headings), [headings]);
+
+  useEffect(() => {
+    if (!headings.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length) setActiveId(visible[0].target.id);
+      },
+      { rootMargin: "0px 0px -65% 0px", threshold: 0 },
+    );
+    headings.forEach(({ id }) => { const el = document.getElementById(id); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, [headings]);
+
+  const go = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: "smooth" });
+    setOpen(false);
+  };
+
+  const toggleNode = (id: string) => {
+    setCollapsedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const isSaved = (id: string) => !!savedHeadingId && savedHeadingId === id;
+  const isCurrentSaved = !!activeId && savedHeadingId === activeId;
+
+  function renderNode(node: TocNode, depth: number) {
+    const hasChildren = node.children.length > 0;
+    const isNodeCollapsed = collapsedNodes.has(node.id);
+    const isActive = activeId === node.id;
+    const saved = isSaved(node.id);
+    const ml = depth === 0 ? "" : depth === 1 ? "ml-3" : depth === 2 ? "ml-5" : "ml-7";
+    return (
+      <div key={node.id}>
+        <div className={`flex items-center rounded-lg ${ml} ${isActive ? "bg-[var(--accent)]" : ""}`}>
+          {hasChildren ? (
+            <button
+              onClick={() => toggleNode(node.id)}
+              className="w-5 h-6 flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            >
+              <ChevronRight className={`w-3 h-3 transition-transform duration-150 ${!isNodeCollapsed ? "rotate-90" : ""}`} />
+            </button>
+          ) : (
+            <div className="w-5 flex-shrink-0" />
+          )}
+          <button
+            onClick={() => go(node.id)}
+            className={`flex-1 text-left text-xs py-1.5 pr-1.5 transition-colors ${
+              isActive
+                ? "text-[var(--primary)] font-semibold"
+                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <span className="line-clamp-2 break-words leading-snug flex-1">{node.text}</span>
+              {saved && <Bookmark className="w-2.5 h-2.5 flex-shrink-0 fill-current text-[var(--primary)]" />}
+            </span>
+          </button>
+        </div>
+        {hasChildren && !isNodeCollapsed && (
+          <div className="mt-0.5 space-y-0.5">
+            {node.children.map(child => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const tocLinks = (
+    <nav className="space-y-0.5">
+      {tree.map(node => renderNode(node, 0))}
+    </nav>
+  );
+
+  const bookmarkBtn = (extraClass?: string) =>
+    onMark ? (
+      <button
+        onClick={() => {
+          if (isCurrentSaved) {
+            onMark(null); // unmark
+          } else if (activeId) {
+            onMark(activeId); // mark new
+          }
+        }}
+        disabled={!activeId}
+        title={isCurrentSaved ? "Hapus tanda baca" : "Tandai posisi baca"}
+        className={`w-6 h-6 rounded flex items-center justify-center transition-colors disabled:opacity-30 ${
+          isCurrentSaved
+            ? "text-[var(--primary)] hover:text-red-500"
+            : "text-[var(--muted-foreground)] hover:text-[var(--primary)]"
+        } ${extraClass ?? ""}`}
+      >
+        <Bookmark className={`w-3.5 h-3.5 ${isCurrentSaved ? "fill-current" : ""}`} />
+      </button>
+    ) : null;
+
+  return (
+    <>
+      {/* Desktop sticky sidebar */}
+      <aside className="hidden xl:block sticky top-24 w-52 flex-shrink-0 self-start">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center gap-1.5 px-4 py-3 border-b border-[var(--border)]">
+            <AlignLeft className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
+            <span className="text-[11px] font-bold text-[var(--foreground)] uppercase tracking-widest flex-1">Daftar Isi</span>
+            {bookmarkBtn()}
+            <button
+              onClick={() => setCollapsed((v) => !v)}
+              title={collapsed ? "Buka daftar isi" : "Tutup daftar isi"}
+              className="w-6 h-6 rounded flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+            >
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`} />
+            </button>
+          </div>
+          {/* Collapsible nav */}
+          {!collapsed && (
+            <div className="p-3 max-h-[55vh] overflow-y-auto">
+              {tocLinks}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Mobile floating button + bottom sheet */}
+      <div className="xl:hidden">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Daftar Isi"
+          className="fixed bottom-6 right-4 z-40 flex items-center gap-1.5 bg-[var(--primary)] text-white px-3.5 py-2.5 rounded-full shadow-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+        >
+          <AlignLeft className="w-3.5 h-3.5" /> Daftar Isi
+        </button>
+        {open && (
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
+            <div className="fixed bottom-16 right-4 left-4 max-w-xs ml-auto z-50 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-[var(--border)]">
+                <AlignLeft className="w-3.5 h-3.5 text-[var(--primary)]" />
+                <span className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex-1">Daftar Isi</span>
+                {bookmarkBtn("mr-1")}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--muted)] text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-3 max-h-[55vh] overflow-y-auto">
+                {tocLinks}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1062,6 +1334,55 @@ function KontenDetailPageContent() {
     content?.isSteppedContent && content.steps?.length ? content.steps[0].id : null
   );
   const [showCertificate, setShowCertificate] = useState(false);
+  const [tocHeadings, setTocHeadings] = useState<TocHeading[]>([]);
+
+  // Track whether the user has manually navigated (prevents last-read from overriding their choice)
+  const hasNavigatedRef = useRef(false);
+
+  // Load last-read step from Firestore and restore position (once user + content are both known)
+  useEffect(() => {
+    if (!user || !content?.isSteppedContent || !content.steps?.length || hasNavigatedRef.current) return;
+    getLastReadStep(user.uid, content.id).then((savedStepId) => {
+      if (!savedStepId || hasNavigatedRef.current) return;
+      const exists = content.steps!.some((s) => s.id === savedStepId);
+      if (exists) setActiveStepId(savedStepId);
+    });
+  }, [user, content]);
+
+  /** Navigate to a step and persist the position to Firestore for cross-device resume. */
+  const navigateToStep = useCallback((stepId: string) => {
+    hasNavigatedRef.current = true;
+    setActiveStepId(stepId);
+    if (user && content?.id) {
+      void saveLastReadStep(user.uid, content.id, stepId);
+    }
+  }, [user, content]);
+
+  // Derive stepped-content TOC headings from the active step's body — no state, no ordering issues
+  const stepTocHeadings = useMemo(() => {
+    if (!content?.isSteppedContent || !content.steps) return [];
+    const step = content.steps.find((s) => s.id === activeStepId) ?? content.steps[0] ?? null;
+    if (!step?.body) return [];
+    return injectHeadingIds(sanitizeHtml(step.body)).headings;
+  }, [content, activeStepId]);
+
+  // Last-read heading bookmark (single content only)
+  const [savedHeadingId, setSavedHeadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user || !content || content.isSteppedContent || content.isDevotionContent) return;
+    getLastReadHeading(user.uid, content.slug).then((id) => { if (id) setSavedHeadingId(id); });
+  }, [user, content]);
+
+  const handleMarkHeading = useCallback((headingId: string | null) => {
+    if (!user || !content?.slug) return;
+    setSavedHeadingId(headingId);
+    if (headingId) {
+      void saveLastReadHeading(user.uid, content.slug, headingId);
+    } else {
+      void clearLastReadHeading(user.uid, content.slug);
+    }
+  }, [user, content]);
 
   // For devotion content — day from ?day= param or null (show progress-based default)
   const rawDay = searchParams?.get("day");
@@ -1188,8 +1509,9 @@ function KontenDetailPageContent() {
             )}
           </div>
 
-          {/* Sidebar + Step content */}
-          <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6">
+          {/* Sidebar + Step content + TOC */}
+          <div className="xl:flex xl:gap-6 xl:items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6 xl:flex-1 xl:min-w-0">
             {/* Steps sidebar */}
             <div className="space-y-2">
               <h2 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-3 px-1">Daftar Langkah</h2>
@@ -1202,7 +1524,7 @@ function KontenDetailPageContent() {
                 return (
                   <button
                     key={step.id}
-                    onClick={() => !prevLocked && setActiveStepId(step.id)}
+                    onClick={() => !prevLocked && navigateToStep(step.id)}
                     disabled={prevLocked}
                     className={`w-full text-left rounded-xl border p-3 transition-all ${
                       isActive
@@ -1271,7 +1593,7 @@ function KontenDetailPageContent() {
                           Selesaikan <strong>{steps[stepIndex - 1].title}</strong> terlebih dahulu.
                         </p>
                         <button
-                          onClick={() => setActiveStepId(steps[stepIndex - 1].id)}
+                          onClick={() => navigateToStep(steps[stepIndex - 1].id)}
                           className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline"
                         >
                           <ArrowLeft className="w-4 h-4" /> Kembali ke langkah sebelumnya
@@ -1304,7 +1626,7 @@ function KontenDetailPageContent() {
                         )}
                         {activeStep.body && (
                           <div className="pt-4 border-t border-[var(--border)]">
-                            <HtmlBody html={activeStep.body} />
+                            <HtmlBodyWithHeadingIds html={activeStep.body} />
                           </div>
                         )}
                       </div>
@@ -1320,7 +1642,7 @@ function KontenDetailPageContent() {
                     {completed.has(activeStep.id) && stepIndex < steps.length - 1 && (
                       <div className="mt-8 flex justify-end">
                         <button
-                          onClick={() => setActiveStepId(steps[stepIndex + 1].id)}
+                          onClick={() => navigateToStep(steps[stepIndex + 1].id)}
                           className="flex items-center gap-2 bg-[var(--primary)] hover:opacity-90 text-white font-semibold px-5 py-2.5 rounded-xl transition-opacity text-sm"
                         >
                           Langkah Berikutnya <ChevronRight className="w-4 h-4" />
@@ -1331,6 +1653,8 @@ function KontenDetailPageContent() {
                 )}
               </div>
             </div>
+          </div>
+          {stepTocHeadings.length > 0 && <TableOfContents headings={stepTocHeadings} />}
           </div>
 
           {/* Test section — shown when all steps are done */}
@@ -1399,7 +1723,7 @@ function KontenDetailPageContent() {
         />
       )}
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link href="/konten" className="inline-flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors text-sm mb-8">
           <ArrowLeft className="w-4 h-4" /> Kembali ke Konten
         </Link>
@@ -1429,7 +1753,8 @@ function KontenDetailPageContent() {
           </div>
         )}
 
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+        <div className="xl:flex xl:gap-6 xl:items-start">
+        <div className="flex-1 min-w-0 bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
           {content.type === "video" && (
             <div className="aspect-video bg-slate-900">
               {canAccess && content.youtubeId ? (
@@ -1522,11 +1847,57 @@ function KontenDetailPageContent() {
             {canAccess && content.body && (
               content.type === "article" ? (
                 <div className="pt-6">
-                  <ArticleSection body={content.body} itemId={slug} alreadyDone={alreadyDone} onComplete={handleSingleComplete} />
+                  {savedHeadingId && tocHeadings.some((h) => h.id === savedHeadingId) && (
+                    <div className="flex items-center gap-3 bg-[var(--accent)] border border-[var(--primary)]/20 rounded-xl px-4 py-3 mb-4">
+                      <Bookmark className="w-4 h-4 text-[var(--primary)] fill-current flex-shrink-0" />
+                      <p className="text-sm text-[var(--foreground)] flex-1">
+                        Lanjutkan dari: <strong>{tocHeadings.find((h) => h.id === savedHeadingId)?.text}</strong>
+                      </p>
+                      <button
+                        onClick={() => {
+                          const el = document.getElementById(savedHeadingId);
+                          if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: "smooth" });
+                        }}
+                        className="text-xs font-semibold text-[var(--primary)] hover:underline whitespace-nowrap"
+                      >
+                        Lanjutkan →
+                      </button>
+                      <button
+                        onClick={() => setSavedHeadingId(null)}
+                        className="w-5 h-5 flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-base leading-none flex-shrink-0"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  <ArticleSection body={content.body} itemId={slug} alreadyDone={alreadyDone} onComplete={handleSingleComplete} onHeadings={setTocHeadings} />
                 </div>
               ) : (
                 <div className="pt-6">
-                  <HtmlBody html={content.body} />
+                  {savedHeadingId && tocHeadings.some((h) => h.id === savedHeadingId) && (
+                    <div className="flex items-center gap-3 bg-[var(--accent)] border border-[var(--primary)]/20 rounded-xl px-4 py-3 mb-4">
+                      <Bookmark className="w-4 h-4 text-[var(--primary)] fill-current flex-shrink-0" />
+                      <p className="text-sm text-[var(--foreground)] flex-1">
+                        Lanjutkan dari: <strong>{tocHeadings.find((h) => h.id === savedHeadingId)?.text}</strong>
+                      </p>
+                      <button
+                        onClick={() => {
+                          const el = document.getElementById(savedHeadingId);
+                          if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 88, behavior: "smooth" });
+                        }}
+                        className="text-xs font-semibold text-[var(--primary)] hover:underline whitespace-nowrap"
+                      >
+                        Lanjutkan →
+                      </button>
+                      <button
+                        onClick={() => setSavedHeadingId(null)}
+                        className="w-5 h-5 flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-base leading-none flex-shrink-0"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  <HtmlBodyWithHeadingIds html={content.body} onHeadings={setTocHeadings} />
                   {!alreadyDone && (
                     <div className="mt-8 flex justify-center">
                       <button
@@ -1550,6 +1921,8 @@ function KontenDetailPageContent() {
               />
             )}
           </div>
+        </div>
+        {tocHeadings.length > 0 && canAccess && <TableOfContents headings={tocHeadings} savedHeadingId={savedHeadingId} onMark={user ? handleMarkHeading : undefined} />}
         </div>
       </div>
     </div>

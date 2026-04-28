@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { User } from "firebase/auth";
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, deleteField } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -117,6 +117,62 @@ async function fsMarkPaid(uid: string, id: string): Promise<void> {
 
 function devotionRef(uid: string, contentId: string) {
   return doc(db, "progress", uid, "devotion", contentId);
+}
+
+// ─── Last-read step (Firestore only — requires login) ─────────────────────────
+
+function lastReadRef(uid: string, contentId: string) {
+  return doc(db, "progress", uid, "lastRead", contentId);
+}
+
+export async function getLastReadStep(uid: string, contentId: string): Promise<string | null> {
+  try {
+    const snap = await getDoc(lastReadRef(uid, contentId));
+    if (snap.exists()) {
+      const data = snap.data() as { stepId?: string };
+      return data.stepId ?? null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLastReadStep(uid: string, contentId: string, stepId: string): Promise<void> {
+  try {
+    await setDoc(lastReadRef(uid, contentId), { stepId, savedAt: new Date().toISOString() }, { merge: true });
+  } catch {
+    // Best-effort; ignore network/permission errors silently
+  }
+}
+
+export async function getLastReadHeading(uid: string, contentId: string): Promise<string | null> {
+  try {
+    const snap = await getDoc(lastReadRef(uid, contentId));
+    if (snap.exists()) {
+      const data = snap.data() as { headingId?: string };
+      return data.headingId ?? null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLastReadHeading(uid: string, contentId: string, headingId: string): Promise<void> {
+  try {
+    await setDoc(lastReadRef(uid, contentId), { headingId, savedAt: new Date().toISOString() }, { merge: true });
+  } catch {
+    // Best-effort
+  }
+}
+
+export async function clearLastReadHeading(uid: string, contentId: string): Promise<void> {
+  try {
+    await updateDoc(lastReadRef(uid, contentId), { headingId: deleteField() });
+  } catch {
+    // Best-effort; ignore if doc doesn't exist
+  }
 }
 
 export async function getDevotionProgress(uid: string, contentId: string): Promise<DevotionProgress | null> {

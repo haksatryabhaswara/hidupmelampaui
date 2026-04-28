@@ -81,6 +81,12 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == uid;
         allow read: if isAdmin();
       }
+
+      // Last-read step subcollection: users manage their own entries
+      match /lastRead/{contentId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
     }
 
     // Content test answers: authenticated users can create their own; admin can read all

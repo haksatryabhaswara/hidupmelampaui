@@ -42,7 +42,11 @@ function DevotionNotification() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!user) { setProgresses([]); return; }
+    if (!user) {
+      // Reset asynchronously to avoid synchronous setState inside an effect body
+      Promise.resolve().then(() => setProgresses([]));
+      return;
+    }
     getAllDevotionProgress(user.uid)
       .then(setProgresses)
       .catch(() => {});
@@ -355,9 +359,7 @@ function ContentCard({ content }: { content: Content }) {
         <h3 className="font-bold text-[var(--foreground)] text-sm leading-snug mb-2 line-clamp-2">
           {content.title}
         </h3>
-        <p className="text-[var(--muted-foreground)] text-xs leading-relaxed mb-4 line-clamp-2 flex-1">
-          {content.description}
-        </p>
+        
         <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] mb-4">
           <span className="flex items-center gap-1">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {content.rating}
@@ -740,20 +742,20 @@ function KonselingSection() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama</label>
-                    <input type="text" value={form.firstName} onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))} placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <input suppressHydrationWarning type="text" value={form.firstName} onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))} placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama Akhir</label>
-                    <input type="text" value={form.lastName} onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))} placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <input suppressHydrationWarning type="text" value={form.lastName} onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))} placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Email <span className="text-red-500">*</span></label>
-                  <input type="email" required value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <input suppressHydrationWarning type="email" required value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Pesan <span className="text-red-500">*</span></label>
-                  <textarea rows={4} required value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                  <textarea suppressHydrationWarning rows={4} required value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
                 </div>
                 <button type="submit" disabled={submitting} className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
                   {submitting ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Mengirim...</> : <><Mail className="w-4 h-4" /> Kirim Pesan</>}
