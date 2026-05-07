@@ -11,6 +11,27 @@ import { getAllDevotionProgress, type DevotionProgress } from "@/lib/progress";
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
 
+function SkeletonCard() {
+  return (
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col animate-pulse">
+      <div className="aspect-video bg-[var(--muted)]" />
+      <div className="p-5 flex-1 flex flex-col gap-3">
+        <div className="h-3 w-20 bg-[var(--muted)] rounded-full" />
+        <div className="space-y-2">
+          <div className="h-4 bg-[var(--muted)] rounded-full" />
+          <div className="h-4 w-3/4 bg-[var(--muted)] rounded-full" />
+        </div>
+        <div className="flex justify-between mt-1">
+          <div className="h-3 w-10 bg-[var(--muted)] rounded-full" />
+          <div className="h-3 w-10 bg-[var(--muted)] rounded-full" />
+          <div className="h-3 w-12 bg-[var(--muted)] rounded-full" />
+        </div>
+        <div className="h-9 bg-[var(--muted)] rounded-lg mt-auto" />
+      </div>
+    </div>
+  );
+}
+
 function formatRupiah(n: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 }
@@ -156,17 +177,23 @@ export default function KontenPage() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [typeFilter, setTypeFilter] = useState("Semua Tipe");
   const [accessFilter, setAccessFilter] = useState("Semua Akses");
-  const [contents, setContents] = useState<Content[]>(allContents);
+  const [contents, setContents] = useState<Content[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getDocs(query(collection(db, "contents"), orderBy("title")))
       .then((snap) => {
         if (!snap.empty) {
           setContents(snap.docs.map((d) => ({ ...(d.data() as Content), id: d.id })));
+        } else {
+          setContents(allContents);
         }
       })
       .catch(() => {
-        // keep static fallback
+        setContents(allContents);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -320,7 +347,11 @@ export default function KontenPage() {
         </div>
 
         {/* Content Grid */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-[var(--muted-foreground)]">
             <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
             <p>Tidak ada konten yang sesuai filter.</p>
