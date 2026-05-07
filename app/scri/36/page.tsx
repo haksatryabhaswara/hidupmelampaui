@@ -190,6 +190,7 @@ export default function ScriPage() {
       setShowBreakpoint(true);
     } else if (currentDimensionIdx < DIMENSIONS.length - 1) {
       setCurrentDimensionIdx((i) => i + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setStep("results");
     }
@@ -202,6 +203,7 @@ export default function ScriPage() {
     } else {
       setStep("results");
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleReset() {

@@ -12,33 +12,75 @@ function truncate(text: string, max: number): string {
   return text.length <= max ? text : text.slice(0, max - 3) + "…";
 }
 
+// ─── Firestore REST helpers ───────────────────────────────────────────────────
+
+const PROJECT_ID = "hidupmelampaui";
+const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+type FsValue =
+  | { stringValue: string }
+  | { integerValue: string }
+  | { doubleValue: number }
+  | { booleanValue: boolean }
+  | { nullValue: null }
+  | { arrayValue: { values?: FsValue[] } }
+  | { mapValue: { fields: Record<string, FsValue> } };
+
+function fsConvert(v: FsValue): unknown {
+  if ("stringValue" in v) return v.stringValue;
+  if ("integerValue" in v) return parseInt(v.integerValue, 10);
+  if ("doubleValue" in v) return v.doubleValue;
+  if ("booleanValue" in v) return v.booleanValue;
+  if ("nullValue" in v) return null;
+  if ("arrayValue" in v) return (v.arrayValue.values ?? []).map(fsConvert);
+  if ("mapValue" in v) return fsFieldsToObj(v.mapValue.fields);
+  return undefined;
+}
+
+function fsFieldsToObj(fields: Record<string, FsValue>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, fsConvert(v)]));
+}
+
+async function fetchContentBySlug(slug: string): Promise<Content | undefined> {
+  try {
+    const res = await fetch(`${FIRESTORE_BASE}:runQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "contents" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "slug" },
+              op: "EQUAL",
+              value: { stringValue: slug },
+            },
+          },
+          limit: 1,
+        },
+      }),
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return undefined;
+    const rows = (await res.json()) as Array<{ document?: { name: string; fields: Record<string, FsValue> } }>;
+    const doc = rows[0]?.document;
+    if (!doc) return undefined;
+    const id = doc.name.split("/").pop() ?? "";
+    return { ...(fsFieldsToObj(doc.fields) as Content), id };
+  } catch {
+    return undefined;
+  }
+}
+
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
 async function getContent(slug: string): Promise<Content | undefined> {
-  // Try static data first (fastest, works without env vars)
+  // Try static data first (fastest, no network)
   const staticContent = allContents.find((c) => c.slug === slug);
   if (staticContent) return staticContent;
 
-  // Fall back to Firebase Admin for dynamically created content
-  try {
-    const { getAdminApp } = await import("@/lib/firebase-admin");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getFirestore } = require("firebase-admin/firestore") as typeof import("firebase-admin/firestore");
-    const app = getAdminApp();
-    const db = getFirestore(app);
-    const snap = await db
-      .collection("contents")
-      .where("slug", "==", slug)
-      .limit(1)
-      .get();
-    if (!snap.empty) {
-      return { ...(snap.docs[0].data() as Content), id: snap.docs[0].id };
-    }
-  } catch {
-    // Firebase Admin not configured — static fallback already returned undefined
-  }
-
-  return undefined;
+  // Fall back to Firestore REST API (contents collection is publicly readable)
+  return fetchContentBySlug(slug);
 }
 
 // ─── generateMetadata ─────────────────────────────────────────────────────────

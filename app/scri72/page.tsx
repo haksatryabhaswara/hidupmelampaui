@@ -219,6 +219,7 @@ function Scri72PageContent() {
       setShowBreakpoint(true);
     } else if (currentDimensionIdx < DIMENSIONS_72.length - 1) {
       setCurrentDimensionIdx((i) => i + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setStep("results");
     }
@@ -231,6 +232,7 @@ function Scri72PageContent() {
     } else {
       setStep("results");
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
