@@ -8,7 +8,6 @@ import {
   doc,
   orderBy,
   query,
-  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { allContents, type Content } from "@/lib/content-data";
@@ -24,7 +23,6 @@ import {
   Globe,
   LogIn,
   Layers,
-  Upload,
   Filter,
   BookOpen,
   ClipboardList,
@@ -47,7 +45,6 @@ export default function AdminKontenPage() {
   const [typeFilter, setTypeFilter] = useState("Semua Tipe");
   const [accessFilter, setAccessFilter] = useState("Semua Akses");
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
 
   const loadContents = useCallback(async () => {
     try {
@@ -79,21 +76,6 @@ export default function AdminKontenPage() {
       alert("Gagal menghapus konten.");
     }
     setDeleting(null);
-  }
-
-  async function handleSeedStaticData() {
-    if (!confirm("Impor semua data konten statis ke Firestore? Data yang ada tidak akan dihapus.")) return;
-    setSeeding(true);
-    try {
-      for (const content of allContents) {
-        await setDoc(doc(db, "contents", content.id), content);
-      }
-      setLoading(true);
-      await loadContents();
-    } catch {
-      alert("Gagal mengimpor data.");
-    }
-    setSeeding(false);
   }
 
   const filtered = contents.filter((c) => {
@@ -245,7 +227,11 @@ export default function AdminKontenPage() {
                       {content.isDevotionContent ? (
                         <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                           <CalendarDays className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{content.devotionEntries?.length ?? 0} Entri</span>
+                          <span className="text-xs font-medium">
+                            {content.devotionEntries?.length
+                              ? `${content.devotionEntries.length} Entri`
+                              : `${(content.body?.match(/<h1[\s>]/gi) ?? []).length} Hari`}
+                          </span>
                         </div>
                       ) : content.isSteppedContent ? (
                         <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400">

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { allContents, type Content, type StepContent, type DevotionEntry } from "@/lib/content-data";
+import { allContents, type Content, type StepContent, type DevotionEntry, type ContentAccess } from "@/lib/content-data";
 import {
   getDevotionProgress, startDevotionProgress, markDevotionDayRead,
   getLastReadStep, saveLastReadStep,
@@ -394,6 +394,38 @@ function injectHeadingIds(html: string): { html: string; headings: TocHeading[] 
     },
   );
   return { html: processed, headings };
+}
+
+// ─── H1-based DevotionEntry parser ──────────────────────────────────────────
+/** Parses <h1> headings from an HTML body string into virtual DevotionEntry objects.
+ * Each H1 becomes one "day"; the content between consecutive H1 tags is its body. */
+function parseH1IntoDevotionEntries(
+  body: string,
+  contentId: string,
+  access: ContentAccess,
+  price?: number,
+): DevotionEntry[] {
+  if (!body || !/<h1[\s>]/i.test(body)) return [];
+
+  const h1Re = /<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>/gi;
+  const positions: Array<{ index: number; end: number; title: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = h1Re.exec(body)) !== null) {
+    const title = m[1].replace(/<[^>]+>/g, "").trim();
+    positions.push({ index: m.index, end: m.index + m[0].length, title });
+  }
+  if (positions.length === 0) return [];
+
+  return positions.map(({ end, title }, i) => ({
+    id: `${contentId}-h1-${i + 1}`,
+    day: i + 1,
+    title,
+    body: body.slice(end, i + 1 < positions.length ? positions[i + 1].index : body.length).trim(),
+    type: "article" as const,
+    youtubeId: null,
+    access,
+    ...(price !== undefined ? { price } : {}),
+  }));
 }
 
 function TableOfContents({ headings, savedHeadingId, onMark }: {
@@ -792,7 +824,13 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
   openAuthModal: (redirect?: string) => void;
   paid: Set<string>;
 }) {
-  const entries = content.devotionEntries ?? [];
+  // Derive entries: H1-based (from body) takes priority over explicit devotionEntries
+  const h1Entries = useMemo(
+    () => parseH1IntoDevotionEntries(content.body ?? "", content.id, content.access, content.price),
+    [content.body, content.id, content.access, content.price],
+  );
+  const useH1Mode = h1Entries.length > 0;
+  const entries = useH1Mode ? h1Entries : (content.devotionEntries ?? []);
 
   const [progress, setProgress] = useState<DevotionProgress | null>(null);
   const [progressLoading, setProgressLoading] = useState(true);
@@ -871,10 +909,16 @@ function DevotionViewer({ content, initialDay, slug, user, openAuthModal, paid }
     window.history.replaceState({}, "", `/konten/${slug}?day=${day}`);
   };
 
-  const canAccess = (e: DevotionEntry) =>
-    e.access === "free" ||
-    (e.access === "login" && !!user) ||
-    (e.access === "paid" && !!user && paid.has(e.id));
+  const canAccess = (e: DevotionEntry) => {
+    if (useH1Mode) {
+      return content.access === "free" ||
+        (content.access === "login" && !!user) ||
+        (content.access === "paid" && !!user && (paid.has(content.id) || paid.has(e.id)));
+    }
+    return e.access === "free" ||
+      (e.access === "login" && !!user) ||
+      (e.access === "paid" && !!user && paid.has(e.id));
+  };
 
   const handleStart = async () => {
     if (!user) { openAuthModal(`/konten/${slug}`); return; }
