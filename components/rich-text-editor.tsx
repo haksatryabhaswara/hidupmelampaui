@@ -122,9 +122,25 @@ export function RichTextEditor({
     }
   };
 
-  /** Tab key: indent list items; insert 4 spaces elsewhere. Shift+Tab outdents. */
+  const applyHeading = useCallback(
+    (level: string) => {
+      editorRef.current?.focus();
+      document.execCommand("formatBlock", false, level);
+      if (editorRef.current) onChange(editorRef.current.innerHTML);
+    },
+    [onChange]
+  );
+
+  /** Tab key: indent list items; insert 4 spaces elsewhere. Shift+Tab outdents.
+   *  Ctrl+Alt+1/2/3 → Heading 1/2/3. Ctrl+Alt+0 → Normal paragraph. */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.ctrlKey && e.altKey) {
+        if (e.key === "1") { e.preventDefault(); applyHeading("h1"); return; }
+        if (e.key === "2") { e.preventDefault(); applyHeading("h2"); return; }
+        if (e.key === "3") { e.preventDefault(); applyHeading("h3"); return; }
+        if (e.key === "0") { e.preventDefault(); applyHeading("p"); return; }
+      }
       if (e.key === "Tab") {
         e.preventDefault();
         if (e.shiftKey) {
@@ -142,7 +158,7 @@ export function RichTextEditor({
         }
       }
     },
-    [exec]
+    [exec, applyHeading]
   );
 
   const sz = "w-3.5 h-3.5";
@@ -160,20 +176,20 @@ export function RichTextEditor({
         {/* Format block */}
         <select
           defaultValue=""
+          title="Format block — Heading shortcuts: Ctrl+Alt+1/2/3, Normal: Ctrl+Alt+0"
           onMouseDown={saveSelection}
           onChange={(e) => {
             restoreSelection();
-            document.execCommand("formatBlock", false, e.target.value);
-            if (editorRef.current) onChange(editorRef.current.innerHTML);
+            applyHeading(e.target.value);
             e.target.value = "";
           }}
           className="h-7 px-1.5 text-xs rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/30 cursor-pointer"
         >
           <option value="" disabled>Format</option>
-          <option value="p">Normal</option>
-          <option value="h1">Heading 1</option>
-          <option value="h2">Heading 2</option>
-          <option value="h3">Heading 3</option>
+          <option value="p">Normal (Ctrl+Alt+0)</option>
+          <option value="h1">Heading 1 (Ctrl+Alt+1)</option>
+          <option value="h2">Heading 2 (Ctrl+Alt+2)</option>
+          <option value="h3">Heading 3 (Ctrl+Alt+3)</option>
           <option value="h4">Heading 4</option>
           <option value="pre">Code Block</option>
           <option value="blockquote">Blockquote</option>
