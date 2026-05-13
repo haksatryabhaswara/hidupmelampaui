@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hidup Melampaui — Bangun Hidup yang Stabil, Produktif & Berdampak",
+  title: "Hidup Melampaui — Karena hidup tidak sekadar di jalani, tetapi dilampaui.",
   description:
     "Platform pengembangan diri dan edukasi untuk membangun manusia yang stabil, bertumbuh, dan berdampak lintas generasi.",
 };
