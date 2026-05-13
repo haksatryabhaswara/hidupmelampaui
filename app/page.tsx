@@ -550,21 +550,7 @@ function ScriSection() {
           </div>
         </div>
 
-        {/* Bottom CTA strip */}
-        <div className="mt-8 bg-[var(--muted)] rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />
-            <p className="text-sm text-[var(--foreground)]">
-              Sudah <strong>100+ peserta</strong> menyelesaikan SCRI dan mendapat laporan personal mereka.
-            </p>
-          </div>
-          <Link
-            href="/scri"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--primary)] hover:underline whitespace-nowrap flex-shrink-0"
-          >
-            Lihat semua versi SCRI <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        
       </div>
     </section>
   );
