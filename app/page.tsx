@@ -11,6 +11,7 @@ import {
   Star,
   Users,
   Award,
+  BarChart2,
   BookOpen,
   Video,
   Lock,
@@ -28,8 +29,10 @@ import {
   Briefcase,
   GraduationCap,
   Globe,
+  Sparkles,
   Sun,
   X,
+  Zap,
 } from "lucide-react";
 
 
@@ -433,6 +436,140 @@ function ContentSection() {
   );
 }
 
+function ScriSection() {
+  const dimensions = [
+    { label: "Kesadaran Diri", desc: "Mengenali pola pikir & emosi" },
+    { label: "Regulasi Diri", desc: "Mengelola respons & kebiasaan" },
+    { label: "Motivasi", desc: "Menemukan penggerak terdalam" },
+    { label: "Empati", desc: "Memahami orang lain secara mendalam" },
+    { label: "Keterampilan Sosial", desc: "Membangun relasi yang sehat" },
+    { label: "Kepemimpinan", desc: "Memimpin dari dalam ke luar" },
+  ];
+
+  return (
+    <section className="py-20 bg-[var(--background)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <div className="text-center mb-12">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-xs font-semibold uppercase tracking-widest mb-4">
+            <Sparkles className="w-3 h-3" />
+            Assessment Gratis
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
+            Ukur{" "}
+            <span className="text-[var(--primary)]">Kesiapan Diri</span>{" "}
+            Anda Sekarang
+          </h2>
+          <p className="text-[var(--muted-foreground)] max-w-xl mx-auto">
+            SCRI (Self-Command Readiness Index) mengukur 6 dimensi kematangan diri
+            — gratis, berbasis sains, dan siap pakai dalam 5 menit.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+          {/* Left: dark hero panel */}
+          <div
+            className="rounded-2xl overflow-hidden flex flex-col"
+            style={{
+              background: "linear-gradient(145deg, #0d0d0d 0%, #1e1a10 60%, #2a2200 100%)",
+            }}
+          >
+            <div className="flex-1 px-8 pt-8 pb-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, #c49a0a, #d4a017)" }}
+                >
+                  <BarChart2 className="w-6 h-6 text-black" />
+                </div>
+                <div>
+                  <p className="text-white font-black text-lg leading-none">SCRI-36</p>
+                  <p className="text-white/50 text-xs mt-0.5">Standard · 36 Pertanyaan · ~5 menit</p>
+                </div>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Tes kesiapan diri berbasis 6 dimensi Self-Command. Dapatkan laporan
+                personal, skor per dimensi, dan interpretasi mendalam — sepenuhnya{" "}
+                <strong className="text-white">gratis</strong>.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
+                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>6</p>
+                  <p className="text-white/50 text-[10px] mt-0.5">Dimensi</p>
+                </div>
+                <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
+                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>36</p>
+                  <p className="text-white/50 text-[10px] mt-0.5">Pertanyaan</p>
+                </div>
+                <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
+                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>5'</p>
+                  <p className="text-white/50 text-[10px] mt-0.5">Menit</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-8 pb-8 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/scri/36"
+                className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #c49a0a, #d4a017)", color: "#0d0d0d" }}
+              >
+                <Zap className="w-4 h-4" />
+                Mulai Gratis
+              </Link>
+              <Link
+                href="/scri72"
+                className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border border-white/20 text-white/80 hover:bg-white/5 transition-colors"
+              >
+                <Star className="w-4 h-4 text-violet-400" />
+                SCRI-72 Extended
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: 6-dimension cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+            {dimensions.map((dim, i) => (
+              <div
+                key={dim.label}
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--primary)] transition-colors group"
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-xs font-black"
+                  style={{ background: "var(--accent)", color: "var(--primary)" }}
+                >
+                  {i + 1}
+                </div>
+                <p className="text-sm font-bold text-[var(--foreground)] leading-snug group-hover:text-[var(--primary)] transition-colors">
+                  {dim.label}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-snug">
+                  {dim.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom CTA strip */}
+        <div className="mt-8 bg-[var(--muted)] rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />
+            <p className="text-sm text-[var(--foreground)]">
+              Sudah <strong>100+ peserta</strong> menyelesaikan SCRI dan mendapat laporan personal mereka.
+            </p>
+          </div>
+          <Link
+            href="/scri"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--primary)] hover:underline whitespace-nowrap flex-shrink-0"
+          >
+            Lihat semua versi SCRI <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProgramUnggulan() {
   return (
     <section className="py-20 bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900 text-white">
@@ -806,6 +943,7 @@ export default function BerandaPage() {
       <ServicesSection />
       <PembentukanSection />
       <ContentSection />
+      <ScriSection />
       <ProgramUnggulan />
       <WhySection />
       <CorporateSection />

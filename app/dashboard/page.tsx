@@ -26,8 +26,10 @@ import {
   Clock,
   Lock,
   RefreshCw,
+  Sparkles,
   Star,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -376,6 +378,118 @@ export default function DashboardPage() {
               Pantau progres belajar dan hasil assessment Anda di sini.
             </p>
           </div>
+
+          {/* ── SCRI Discovery Banner (shown when user has not taken any SCRI) ── */}
+          {!scriLoading && !scri72Loading && !scriResult && !scri72Result && (
+            <section className="relative overflow-hidden rounded-2xl border border-[var(--border)]">
+              {/* Gold gradient header strip */}
+              <div
+                className="px-6 py-5 sm:py-6"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #0d0d0d 0%, #1e1a10 50%, #2a2200 100%)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--primary)]/20 border border-[var(--primary)]/40 text-[var(--primary)] text-xs font-semibold uppercase tracking-widest">
+                    <Sparkles className="w-3 h-3" />
+                    Assessment Gratis
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                  Sudah tahu tingkat{" "}
+                  <span style={{ color: "#d4a017" }}>kesiapan diri</span>{" "}
+                  Anda?
+                </h2>
+                <p className="text-white/70 text-sm mt-2 leading-relaxed max-w-lg">
+                  SCRI mengukur 6 dimensi Self-Command — dari kesadaran diri
+                  hingga kepemimpinan. Kenali kekuatan &amp; area berkembang Anda
+                  dalam hitungan menit.
+                </p>
+              </div>
+
+              {/* Feature bullets + CTAs */}
+              <div className="bg-[var(--card)] px-6 py-5 space-y-5">
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0 mt-0.5">
+                      <Zap className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--foreground)]">Cepat &amp; Akurat</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        SCRI-36 hanya 5–7 menit
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0 mt-0.5">
+                      <BarChart2 className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--foreground)]">Laporan Personal</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        Skor per dimensi + interpretasi
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0 mt-0.5">
+                      <Star className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--foreground)]">Sertifikat Eksklusif</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        Unduh &amp; bagikan pencapaian Anda
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6 dimension badges */}
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Kesadaran Diri",
+                    "Regulasi Diri",
+                    "Motivasi",
+                    "Empati",
+                    "Keterampilan Sosial",
+                    "Kepemimpinan",
+                  ].map((d) => (
+                    <span
+                      key={d}
+                      className="text-[10px] font-medium px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted-foreground)] bg-[var(--muted)]"
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
+
+                {/* CTA buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                  <Link
+                    href="/scri/36"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90"
+                    style={{
+                      background: "linear-gradient(135deg, #c49a0a, #d4a017)",
+                      color: "#0d0d0d",
+                    }}
+                  >
+                    <Zap className="w-4 h-4" />
+                    Mulai SCRI-36 — Gratis
+                  </Link>
+                  <Link
+                    href="/scri72"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+                  >
+                    <Star className="w-4 h-4 text-violet-500" />
+                    Coba SCRI-72 Extended
+                    <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]" />
+                  </Link>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* ── SCRI-36 Section ──────────────────────────────────────────── */}
           <section className="space-y-4">
