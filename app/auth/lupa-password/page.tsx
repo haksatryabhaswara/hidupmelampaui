@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Mail, AlertCircle, CheckCircle } from "lucide-react";
+import Image from "next/image";
+import { Mail, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LupaPasswordPage() {
@@ -30,8 +31,14 @@ export default function LupaPasswordPage() {
     <div className="min-h-screen bg-[var(--muted)] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[var(--primary)] flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-6 h-6 text-white" />
+          <div className="flex justify-center mb-3">
+            <Image
+              src="https://firebasestorage.googleapis.com/v0/b/hidupmelampaui.firebasestorage.app/o/logo%2Flogo%20saja.jpg?alt=media&token=765576b5-20ee-43fd-af8e-6f4171f9e971"
+              alt="Hidup Melampaui"
+              width={56}
+              height={56}
+              className="rounded-xl object-cover"
+            />
           </div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Reset Password</h1>
           <p className="text-[var(--muted-foreground)] text-sm mt-1">Masukkan email untuk menerima tautan reset</p>

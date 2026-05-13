@@ -18,11 +18,13 @@ import {
   Shield,
   ClipboardList,
   Bell,
+  FolderOpen,
 } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/konten", label: "Konten", icon: BookOpen },
+  { href: "/admin/dokumen", label: "Dokumen", icon: FolderOpen },
   { href: "/admin/program", label: "Program", icon: Layers },
   { href: "/admin/tentang", label: "Tentang", icon: Info },
   { href: "/admin/pengguna", label: "Pengguna", icon: Users },

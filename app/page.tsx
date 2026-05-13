@@ -35,8 +35,6 @@ import {
   Zap,
 } from "lucide-react";
 
-
-
 // ─── Devotion Notification ──────────────────────────────────────────────────────
 
 function DevotionNotification() {
@@ -65,7 +63,9 @@ function DevotionNotification() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center gap-3 flex-wrap">
           <Sun className="w-4 h-4 flex-shrink-0" />
-          <span className="text-sm font-semibold flex-shrink-0">Renungan Harian:</span>
+          <span className="text-sm font-semibold flex-shrink-0">
+            Renungan Harian:
+          </span>
           <div className="flex items-center gap-3 flex-wrap flex-1">
             {active.map((p) => (
               <Link
@@ -73,7 +73,9 @@ function DevotionNotification() {
                 href={`/konten/${p.contentSlug}?day=${p.lastReadDay}`}
                 className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 transition-colors rounded-full px-3 py-1 text-xs font-medium"
               >
-                <span className="line-clamp-1 max-w-[140px]">{p.contentTitle}</span>
+                <span className="line-clamp-1 max-w-[140px]">
+                  {p.contentTitle}
+                </span>
                 <span className="flex-shrink-0">— Hari {p.lastReadDay}</span>
                 <ChevronRight className="w-3 h-3 flex-shrink-0" />
               </Link>
@@ -104,20 +106,19 @@ function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 rounded-full px-4 py-1.5 text-sm text-blue-200">
+            {/* <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 rounded-full px-4 py-1.5 text-sm text-blue-200">
               <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
               Platform Pengembangan Diri #1 Indonesia
-            </div>
+            </div> */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Bangun Hidup yang{" "}
+              Karena hidup tidak sekadar di jalani, {" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                Stabil, Produktif,
+                tetapi dilampaui.
               </span>{" "}
-              &amp; Berdampak
             </h1>
             <p className="text-lg text-blue-100/80 leading-relaxed max-w-lg">
-              Dengan Langkah Terstruktur — Membangun Manusia yang Stabil, Bertumbuh,
-              dan Berdampak Lintas Generasi.
+              Dengan Langkah Terstruktur — Membangun Manusia yang Stabil,
+              Bertumbuh, dan Berdampak Lintas Generasi.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
@@ -137,16 +138,24 @@ function HeroSection() {
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {["R", "A", "D", "S"].map((l, i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-xs font-bold border-2 border-blue-900">
+                    <div
+                      key={i}
+                      className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-xs font-bold border-2 border-blue-900"
+                    >
                       {l}
                     </div>
                   ))}
                 </div>
-                <span className="text-sm text-blue-200">100+ Peserta Aktif</span>
+                <span className="text-sm text-blue-200">
+                  100+ Peserta Aktif
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star
+                    key={s}
+                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                  />
                 ))}
                 <span className="text-sm text-blue-200 ml-1">4.9/5 Rating</span>
               </div>
@@ -186,7 +195,11 @@ function ServicesSection() {
       icon: <Users className="w-6 h-6" />,
       label: "Untuk Individu",
       color: "text-blue-500 bg-blue-50 dark:bg-blue-950/50",
-      items: ["Arsitek Kehidupan", "Kehidupan Manunggal", "Coaching & Konseling"],
+      items: [
+        "Arsitek Kehidupan",
+        "Kehidupan Manunggal",
+        "Coaching & Konseling",
+      ],
     },
     {
       icon: <Building2 className="w-6 h-6" />,
@@ -206,24 +219,37 @@ function ServicesSection() {
     <section className="py-20 bg-[var(--background)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">Layanan Kami</p>
+          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">
+            Layanan Kami
+          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
             Mendampingi Perjalanan Stabil dan Berdampak
           </h2>
           <p className="text-[var(--muted-foreground)] max-w-2xl mx-auto">
-            Kami merancang intervensi sesuai kebutuhan — dari individu, organisasi, hingga komunitas lintas generasi.
+            Kami merancang intervensi sesuai kebutuhan — dari individu,
+            organisasi, hingga komunitas lintas generasi.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {services.map((svc) => (
-            <div key={svc.label} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:shadow-md transition-shadow">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${svc.color}`}>
+            <div
+              key={svc.label}
+              className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:shadow-md transition-shadow"
+            >
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${svc.color}`}
+              >
                 {svc.icon}
               </div>
-              <h3 className="font-bold text-lg text-[var(--foreground)] mb-3">{svc.label}</h3>
+              <h3 className="font-bold text-lg text-[var(--foreground)] mb-3">
+                {svc.label}
+              </h3>
               <ul className="space-y-2">
                 {svc.items.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm">
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm"
+                  >
                     <CheckCircle className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
                     {item}
                   </li>
@@ -244,7 +270,12 @@ function PembentukanSection() {
       title: "Pembentukan Individu",
       subtitle: "Untuk profesional muda hingga fase kedewasaan",
       color: "from-rose-500 to-pink-500",
-      items: ["Stabilitas emosi", "Kejelasan arah hidup", "Kepemimpinan mikro", "Integrasi spiritual"],
+      items: [
+        "Stabilitas emosi",
+        "Kejelasan arah hidup",
+        "Kepemimpinan mikro",
+        "Integrasi spiritual",
+      ],
       cta: "Pelajari Program Individu",
       href: "/program/arsitek-kehidupan",
     },
@@ -253,7 +284,11 @@ function PembentukanSection() {
       title: "Pengembangan Organisasi",
       subtitle: "Membangun stabilitas manusia di dalam organisasi",
       color: "from-blue-500 to-indigo-500",
-      items: ["Leadership pipeline", "Retensi Gen Z", "Culture & integrity building"],
+      items: [
+        "Leadership pipeline",
+        "Retensi Gen Z",
+        "Culture & integrity building",
+      ],
       cta: "Program Corporate",
       href: "/",
     },
@@ -271,7 +306,12 @@ function PembentukanSection() {
       title: "Ekosistem & Gerakan",
       subtitle: "Membangun komunitas dan dampak lintas generasi",
       color: "from-emerald-500 to-teal-500",
-      items: ["Komunitas lintas generasi", "Academy digital", "Sertifikasi", "Research Lab"],
+      items: [
+        "Komunitas lintas generasi",
+        "Academy digital",
+        "Sertifikasi",
+        "Research Lab",
+      ],
       cta: "Bergabung dalam Movement",
       href: "/program/ekosistem",
     },
@@ -281,14 +321,19 @@ function PembentukanSection() {
     <section className="py-20 bg-[var(--muted)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">Pilar Utama</p>
+          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">
+            Pilar Utama
+          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
             Membangun Manusia yang Kokoh
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {pillars.map((p) => (
-            <div key={p.title} className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 flex flex-col">
+            <div
+              key={p.title}
+              className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 flex flex-col"
+            >
               <div className={`bg-gradient-to-r ${p.color} p-5`}>
                 <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-white mb-3">
                   {p.icon}
@@ -299,7 +344,10 @@ function PembentukanSection() {
               <div className="p-5 flex-1 flex flex-col">
                 <ul className="space-y-1.5 flex-1 mb-4">
                   {p.items.map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm">
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm"
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] flex-shrink-0" />
                       {item}
                     </li>
@@ -351,7 +399,11 @@ function ContentCard({ content }: { content: Content }) {
           </div>
         )}
         <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-          {content.type === "video" ? <Video className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
+          {content.type === "video" ? (
+            <Video className="w-3 h-3" />
+          ) : (
+            <BookOpen className="w-3 h-3" />
+          )}
           {content.type === "video" ? "Video" : "Artikel"}
         </div>
       </div>
@@ -362,13 +414,15 @@ function ContentCard({ content }: { content: Content }) {
         <h3 className="font-bold text-[var(--foreground)] text-sm leading-snug mb-2 line-clamp-2">
           {content.title}
         </h3>
-        
+
         <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] mb-4">
           <span className="flex items-center gap-1">
-            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {content.rating}
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />{" "}
+            {content.rating}
           </span>
           <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" /> {content.students.toLocaleString("id-ID")}
+            <Users className="w-3 h-3" />{" "}
+            {content.students.toLocaleString("id-ID")}
           </span>
           <span>{content.duration}</span>
         </div>
@@ -396,7 +450,9 @@ function ContentCard({ content }: { content: Content }) {
 }
 
 function ContentSection() {
-  const [contents, setContents] = React.useState<Content[]>(() => allContents.slice(0, 6));
+  const [contents, setContents] = React.useState<Content[]>(() =>
+    allContents.slice(0, 6),
+  );
 
   React.useEffect(() => {
     getDocs(query(collection(db, "contents"), orderBy("title")))
@@ -416,8 +472,12 @@ function ContentSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
           <div>
-            <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-1">Konten Pilihan</p>
-            <h2 className="text-3xl font-bold text-[var(--foreground)]">Mulai Belajar Sekarang</h2>
+            <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-1">
+              Konten Pilihan
+            </p>
+            <h2 className="text-3xl font-bold text-[var(--foreground)]">
+              Mulai Belajar Sekarang
+            </h2>
           </div>
           <Link
             href="/konten"
@@ -456,13 +516,12 @@ function ScriSection() {
             Assessment Gratis
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
-            Ukur{" "}
-            <span className="text-[var(--primary)]">Kesiapan Diri</span>{" "}
+            Ukur <span className="text-[var(--primary)]">Kesiapan Diri</span>{" "}
             Anda Sekarang
           </h2>
           <p className="text-[var(--muted-foreground)] max-w-xl mx-auto">
-            SCRI (Self-Command Readiness Index) mengukur 6 dimensi kematangan diri
-            — gratis, berbasis sains, dan siap pakai dalam 5 menit.
+            SCRI (Self-Command Readiness Index) mengukur 6 dimensi kematangan
+            diri — gratis, berbasis sains, dan siap pakai dalam 5 menit.
           </p>
         </div>
 
@@ -471,38 +530,60 @@ function ScriSection() {
           <div
             className="rounded-2xl overflow-hidden flex flex-col"
             style={{
-              background: "linear-gradient(145deg, #0d0d0d 0%, #1e1a10 60%, #2a2200 100%)",
+              background:
+                "linear-gradient(145deg, #0d0d0d 0%, #1e1a10 60%, #2a2200 100%)",
             }}
           >
             <div className="flex-1 px-8 pt-8 pb-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, #c49a0a, #d4a017)" }}
+                  style={{
+                    background: "linear-gradient(135deg, #c49a0a, #d4a017)",
+                  }}
                 >
                   <BarChart2 className="w-6 h-6 text-black" />
                 </div>
                 <div>
-                  <p className="text-white font-black text-lg leading-none">SCRI-36</p>
-                  <p className="text-white/50 text-xs mt-0.5">Standard · 36 Pertanyaan · ~5 menit</p>
+                  <p className="text-white font-black text-lg leading-none">
+                    SCRI-36
+                  </p>
+                  <p className="text-white/50 text-xs mt-0.5">
+                    Standard · 36 Pertanyaan · ~5 menit
+                  </p>
                 </div>
               </div>
               <p className="text-white/70 text-sm leading-relaxed">
-                Tes kesiapan diri berbasis 6 dimensi Self-Command. Dapatkan laporan
-                personal, skor per dimensi, dan interpretasi mendalam — sepenuhnya{" "}
-                <strong className="text-white">gratis</strong>.
+                Tes kesiapan diri berbasis 6 dimensi Self-Command. Dapatkan
+                laporan personal, skor per dimensi, dan interpretasi mendalam —
+                sepenuhnya <strong className="text-white">gratis</strong>.
               </p>
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
-                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>6</p>
+                  <p
+                    className="text-2xl font-black"
+                    style={{ color: "#d4a017" }}
+                  >
+                    6
+                  </p>
                   <p className="text-white/50 text-[10px] mt-0.5">Dimensi</p>
                 </div>
                 <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
-                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>36</p>
+                  <p
+                    className="text-2xl font-black"
+                    style={{ color: "#d4a017" }}
+                  >
+                    36
+                  </p>
                   <p className="text-white/50 text-[10px] mt-0.5">Pertanyaan</p>
                 </div>
                 <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
-                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>5&lsquo;</p>
+                  <p
+                    className="text-2xl font-black"
+                    style={{ color: "#d4a017" }}
+                  >
+                    5&lsquo;
+                  </p>
                   <p className="text-white/50 text-[10px] mt-0.5">Menit</p>
                 </div>
               </div>
@@ -511,7 +592,10 @@ function ScriSection() {
               <Link
                 href="/scri/36"
                 className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #c49a0a, #d4a017)", color: "#0d0d0d" }}
+                style={{
+                  background: "linear-gradient(135deg, #c49a0a, #d4a017)",
+                  color: "#0d0d0d",
+                }}
               >
                 <Zap className="w-4 h-4" />
                 Mulai Gratis
@@ -535,7 +619,10 @@ function ScriSection() {
               >
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-xs font-black"
-                  style={{ background: "var(--accent)", color: "var(--primary)" }}
+                  style={{
+                    background: "var(--accent)",
+                    color: "var(--primary)",
+                  }}
                 >
                   {i + 1}
                 </div>
@@ -549,8 +636,6 @@ function ScriSection() {
             ))}
           </div>
         </div>
-
-        
       </div>
     </section>
   );
@@ -566,22 +651,39 @@ function ProgramUnggulan() {
               <Award className="w-4 h-4" /> Program Unggulan
             </div>
             <h2 className="text-3xl md:text-4xl font-bold">
-              Program 1 Tahun<br />
+              Program 1 Tahun
+              <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
                 Hidup Melampaui Batas
               </span>
             </h2>
             <p className="text-blue-100/80 leading-relaxed">
-              Program 1 tahun yang membimbing Anda melewati tantangan dan membuka potensi sejati
-              dalam hidup. Dilaksanakan secara <strong className="text-white">Hybrid</strong>.
+              Program 1 tahun yang membimbing Anda melewati tantangan dan
+              membuka potensi sejati dalam hidup. Dilaksanakan secara{" "}
+              <strong className="text-white">Hybrid</strong>.
             </p>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { phase: "90 Hari", label: "Fondasi", color: "from-blue-600 to-blue-700" },
-                { phase: "6 Bulan", label: "Growth", color: "from-indigo-600 to-purple-700" },
-                { phase: "3 Bulan", label: "Dampak & Legacy", color: "from-purple-600 to-pink-700" },
+                {
+                  phase: "90 Hari",
+                  label: "Fondasi",
+                  color: "from-blue-600 to-blue-700",
+                },
+                {
+                  phase: "6 Bulan",
+                  label: "Growth",
+                  color: "from-indigo-600 to-purple-700",
+                },
+                {
+                  phase: "3 Bulan",
+                  label: "Dampak & Legacy",
+                  color: "from-purple-600 to-pink-700",
+                },
               ].map((p) => (
-                <div key={p.phase} className={`bg-gradient-to-b ${p.color} rounded-xl p-4 text-center`}>
+                <div
+                  key={p.phase}
+                  className={`bg-gradient-to-b ${p.color} rounded-xl p-4 text-center`}
+                >
                   <p className="font-bold text-lg">{p.phase}</p>
                   <p className="text-white/70 text-xs mt-1">{p.label}</p>
                 </div>
@@ -614,19 +716,33 @@ function ProgramUnggulan() {
                 HK
               </div>
               <div>
-                <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">Founder & Lead Mentor</p>
-                <h3 className="font-bold text-white text-lg leading-tight">Dr. Ir. Heru Kustriyadi Wibawa, MSc</h3>
-                <p className="text-blue-200 text-sm mt-1">Praktisi Pengembangan Manusia</p>
+                <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">
+                  Founder & Lead Mentor
+                </p>
+                <h3 className="font-bold text-white text-lg leading-tight">
+                  Dr. Ir. Heru Kustriyadi Wibawa, MSc
+                </h3>
+                <p className="text-blue-200 text-sm mt-1">
+                  Praktisi Pengembangan Manusia
+                </p>
               </div>
             </div>
             <div className="border-t border-white/10 pt-5 space-y-3">
               <p className="text-white/80 text-sm leading-relaxed">
-                Dengan pengalaman lebih dari dua dekade dalam pengembangan manusia, Dr. Heru memadukan
-                pendekatan ilmiah, spiritual, dan praktis untuk membangun individu yang stabil dan berdampak.
+                Dengan pengalaman lebih dari dua dekade dalam pengembangan
+                manusia, Dr. Heru memadukan pendekatan ilmiah, spiritual, dan
+                praktis untuk membangun individu yang stabil dan berdampak.
               </p>
               <div className="flex flex-wrap gap-2">
-                {["Leadership Coach", "Corporate Consultant", "Executive Mentor"].map((tag) => (
-                  <span key={tag} className="bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs px-3 py-1 rounded-full">
+                {[
+                  "Leadership Coach",
+                  "Corporate Consultant",
+                  "Executive Mentor",
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs px-3 py-1 rounded-full"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -663,9 +779,14 @@ function WhySection() {
             </div>
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
               <p className="text-[var(--foreground)] leading-relaxed italic">
-                Maka perjalanan ini untuk Anda.<br /><br />
-                Karena pada akhirnya,<br />
-                yang bertahan bukan yang paling cepat.<br /><br />
+                Maka perjalanan ini untuk Anda.
+                <br />
+                <br />
+                Karena pada akhirnya,
+                <br />
+                yang bertahan bukan yang paling cepat.
+                <br />
+                <br />
                 <strong>Yang bertahan adalah yang paling kokoh.</strong>
               </p>
             </div>
@@ -678,17 +799,40 @@ function WhySection() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { icon: <Target className="w-5 h-5" />, title: "Fokus Pembentukan", desc: "Bukan sekadar event training, tapi pembentukan berkelanjutan." },
-              { icon: <GraduationCap className="w-5 h-5" />, title: "Kurikulum Terstruktur", desc: "Dirancang ilmiah dan telah terbukti pada 150+ alumni." },
-              { icon: <Heart className="w-5 h-5" />, title: "Pendampingan Personal", desc: "Didampingi langsung oleh mentor berpengalaman." },
-              { icon: <Users className="w-5 h-5" />, title: "Komunitas Suportif", desc: "Bergabung dengan komunitas yang saling mendukung." },
+              {
+                icon: <Target className="w-5 h-5" />,
+                title: "Fokus Pembentukan",
+                desc: "Bukan sekadar event training, tapi pembentukan berkelanjutan.",
+              },
+              {
+                icon: <GraduationCap className="w-5 h-5" />,
+                title: "Kurikulum Terstruktur",
+                desc: "Dirancang ilmiah dan telah terbukti pada 150+ alumni.",
+              },
+              {
+                icon: <Heart className="w-5 h-5" />,
+                title: "Pendampingan Personal",
+                desc: "Didampingi langsung oleh mentor berpengalaman.",
+              },
+              {
+                icon: <Users className="w-5 h-5" />,
+                title: "Komunitas Suportif",
+                desc: "Bergabung dengan komunitas yang saling mendukung.",
+              },
             ].map((item) => (
-              <div key={item.title} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5">
+              <div
+                key={item.title}
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5"
+              >
                 <div className="w-10 h-10 rounded-lg bg-[var(--accent)] text-[var(--primary)] flex items-center justify-center mb-3">
                   {item.icon}
                 </div>
-                <h3 className="font-bold text-[var(--foreground)] text-sm mb-1">{item.title}</h3>
-                <p className="text-[var(--muted-foreground)] text-xs leading-relaxed">{item.desc}</p>
+                <h3 className="font-bold text-[var(--foreground)] text-sm mb-1">
+                  {item.title}
+                </h3>
+                <p className="text-[var(--muted-foreground)] text-xs leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -703,18 +847,23 @@ function CorporateSection() {
     <section className="py-20 bg-[var(--background)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         <div className="text-center">
-          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">Corporate Human Architecture</p>
+          <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider mb-2">
+            Corporate Human Architecture
+          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
             Realitas Organisasi Hari Ini
           </h2>
           <p className="text-[var(--muted-foreground)] max-w-2xl mx-auto">
-            Pendekatan strategis untuk membangun stabilitas manusia di dalam organisasi — dari Gen Z hingga leadership pipeline.
+            Pendekatan strategis untuk membangun stabilitas manusia di dalam
+            organisasi — dari Gen Z hingga leadership pipeline.
           </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
             <h3 className="font-bold text-[var(--foreground)] mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950 text-red-500 flex items-center justify-center text-xs font-bold">!</span>
+              <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950 text-red-500 flex items-center justify-center text-xs font-bold">
+                !
+              </span>
               Tantangan Organisasi
             </h3>
             <ul className="space-y-2">
@@ -725,15 +874,22 @@ function CorporateSection() {
                 "Budaya kerja tanpa nilai",
                 "Produktivitas fluktuatif",
               ].map((c) => (
-                <li key={c} className="flex items-start gap-2 text-sm text-[var(--muted-foreground)]">
-                  <span className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-950 text-red-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">×</span>
+                <li
+                  key={c}
+                  className="flex items-start gap-2 text-sm text-[var(--muted-foreground)]"
+                >
+                  <span className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-950 text-red-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                    ×
+                  </span>
                   {c}
                 </li>
               ))}
             </ul>
             <p className="mt-4 text-sm text-[var(--foreground)] font-medium">
               Masalahnya bukan pada sistem.{" "}
-              <span className="text-[var(--primary)]">Masalahnya pada stabilitas manusianya.</span>
+              <span className="text-[var(--primary)]">
+                Masalahnya pada stabilitas manusianya.
+              </span>
             </p>
           </div>
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
@@ -742,7 +898,10 @@ function CorporateSection() {
               Apa Itu CHA?
             </h3>
             <p className="text-sm text-[var(--muted-foreground)] mb-3 leading-relaxed">
-              <strong className="text-[var(--foreground)]">Corporate Human Architecture</strong> menggabungkan:
+              <strong className="text-[var(--foreground)]">
+                Corporate Human Architecture
+              </strong>{" "}
+              menggabungkan:
             </p>
             <ul className="space-y-2">
               {[
@@ -752,8 +911,12 @@ function CorporateSection() {
                 "Culture & Integrity Building",
                 "Strategic Human Capital Architecture",
               ].map((s) => (
-                <li key={s} className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                  <CheckCircle className="w-4 h-4 text-[var(--primary)] flex-shrink-0" /> {s}
+                <li
+                  key={s}
+                  className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]"
+                >
+                  <CheckCircle className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />{" "}
+                  {s}
                 </li>
               ))}
             </ul>
@@ -771,8 +934,12 @@ function CorporateSection() {
                 "Budaya organisasi berbasis nilai",
                 "Stabilitas kinerja jangka panjang",
               ].map((o) => (
-                <li key={o} className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                  <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" /> {o}
+                <li
+                  key={o}
+                  className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]"
+                >
+                  <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />{" "}
+                  {o}
                 </li>
               ))}
             </ul>
@@ -785,19 +952,38 @@ function CorporateSection() {
           </div>
         </div>
         <div className="bg-[var(--muted)] rounded-2xl p-8">
-          <h3 className="font-bold text-[var(--foreground)] text-xl text-center mb-8">Model Kerja Sama</h3>
+          <h3 className="font-bold text-[var(--foreground)] text-xl text-center mb-8">
+            Model Kerja Sama
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: <BookOpen className="w-5 h-5" />, label: "In-house Training" },
-              { icon: <GraduationCap className="w-5 h-5" />, label: "Leadership Dev Series" },
-              { icon: <Target className="w-5 h-5" />, label: "Strategic Consulting" },
-              { icon: <Briefcase className="w-5 h-5" />, label: "Retainer Advisory" },
+              {
+                icon: <BookOpen className="w-5 h-5" />,
+                label: "In-house Training",
+              },
+              {
+                icon: <GraduationCap className="w-5 h-5" />,
+                label: "Leadership Dev Series",
+              },
+              {
+                icon: <Target className="w-5 h-5" />,
+                label: "Strategic Consulting",
+              },
+              {
+                icon: <Briefcase className="w-5 h-5" />,
+                label: "Retainer Advisory",
+              },
             ].map((m) => (
-              <div key={m.label} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 text-center">
+              <div
+                key={m.label}
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 text-center"
+              >
                 <div className="w-10 h-10 rounded-lg bg-[var(--accent)] text-[var(--primary)] flex items-center justify-center mx-auto mb-3">
                   {m.icon}
                 </div>
-                <p className="text-sm font-medium text-[var(--foreground)]">{m.label}</p>
+                <p className="text-sm font-medium text-[var(--foreground)]">
+                  {m.label}
+                </p>
               </div>
             ))}
           </div>
@@ -808,7 +994,12 @@ function CorporateSection() {
 }
 
 function KonselingSection() {
-  const [form, setForm] = React.useState({ firstName: "", lastName: "", email: "", message: "" });
+  const [form, setForm] = React.useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    message: "",
+  });
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
 
@@ -837,51 +1028,128 @@ function KonselingSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           <div className="space-y-6">
-            <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider">Konseling</p>
+            <p className="text-[var(--primary)] font-semibold text-sm uppercase tracking-wider">
+              Konseling
+            </p>
             <h2 className="text-3xl font-bold text-[var(--foreground)]">
               Pendampingan Personal yang Bermakna
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {["Pra Pernikahan", "Pernikahan", "Keluarga", "Karier", "Tantangan Hidup", "Dan lainnya"].map((topic) => (
-                <div key={topic} className="flex items-center gap-2 bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 text-sm text-[var(--foreground)]">
-                  <Heart className="w-4 h-4 text-rose-400 flex-shrink-0" /> {topic}
+              {[
+                "Pra Pernikahan",
+                "Pernikahan",
+                "Keluarga",
+                "Karier",
+                "Tantangan Hidup",
+                "Dan lainnya",
+              ].map((topic) => (
+                <div
+                  key={topic}
+                  className="flex items-center gap-2 bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 text-sm text-[var(--foreground)]"
+                >
+                  <Heart className="w-4 h-4 text-rose-400 flex-shrink-0" />{" "}
+                  {topic}
                 </div>
               ))}
             </div>
-            
           </div>
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8">
-            <h3 className="font-bold text-[var(--foreground)] text-xl mb-6">Hubungi Kami</h3>
+            <h3 className="font-bold text-[var(--foreground)] text-xl mb-6">
+              Hubungi Kami
+            </h3>
             {submitted ? (
               <div className="text-center py-8 space-y-3">
                 <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center mx-auto">
                   <CheckCircle className="w-7 h-7" />
                 </div>
-                <p className="font-semibold text-[var(--foreground)]">Pesan Terkirim!</p>
-                <p className="text-sm text-[var(--muted-foreground)]">Tim kami akan menghubungi Anda segera.</p>
+                <p className="font-semibold text-[var(--foreground)]">
+                  Pesan Terkirim!
+                </p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Tim kami akan menghubungi Anda segera.
+                </p>
               </div>
             ) : (
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama</label>
-                    <input suppressHydrationWarning type="text" value={form.firstName} onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))} placeholder="Nama depan" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                      Nama
+                    </label>
+                    <input
+                      suppressHydrationWarning
+                      type="text"
+                      value={form.firstName}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, firstName: e.target.value }))
+                      }
+                      placeholder="Nama depan"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Nama Akhir</label>
-                    <input suppressHydrationWarning type="text" value={form.lastName} onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))} placeholder="Nama belakang" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                      Nama Akhir
+                    </label>
+                    <input
+                      suppressHydrationWarning
+                      type="text"
+                      value={form.lastName}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, lastName: e.target.value }))
+                      }
+                      placeholder="Nama belakang"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+                    />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Email <span className="text-red-500">*</span></label>
-                  <input suppressHydrationWarning type="email" required value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="alamat@email.com" className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]" />
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    suppressHydrationWarning
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, email: e.target.value }))
+                    }
+                    placeholder="alamat@email.com"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Pesan <span className="text-red-500">*</span></label>
-                  <textarea suppressHydrationWarning rows={4} required value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} placeholder="Tuliskan pesan Anda..." className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none" />
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Pesan <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    suppressHydrationWarning
+                    rows={4}
+                    required
+                    value={form.message}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, message: e.target.value }))
+                    }
+                    placeholder="Tuliskan pesan Anda..."
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] resize-none"
+                  />
                 </div>
-                <button type="submit" disabled={submitting} className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
-                  {submitting ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Mengirim...</> : <><Mail className="w-4 h-4" /> Kirim Pesan</>}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
+                      Mengirim...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" /> Kirim Pesan
+                    </>
+                  )}
                 </button>
               </form>
             )}
@@ -899,9 +1167,12 @@ function NewsletterSection() {
         <div className="w-12 h-12 rounded-xl bg-[var(--accent)] text-[var(--primary)] flex items-center justify-center mx-auto">
           <MessageCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl font-bold text-[var(--foreground)]">Berlangganan Sekarang</h2>
+        <h2 className="text-2xl font-bold text-[var(--foreground)]">
+          Berlangganan Sekarang
+        </h2>
         <p className="text-[var(--muted-foreground)]">
-          Dapatkan pembaruan dan tips membangun hidup melampaui langsung di inbox Anda.
+          Dapatkan pembaruan dan tips membangun hidup melampaui langsung di
+          inbox Anda.
         </p>
         <form className="flex gap-3" onSubmit={(e) => e.preventDefault()}>
           <input
@@ -910,7 +1181,11 @@ function NewsletterSection() {
             className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
             suppressHydrationWarning
           />
-          <button type="submit" className="bg-[var(--primary)] text-white font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap" suppressHydrationWarning>
+          <button
+            type="submit"
+            className="bg-[var(--primary)] text-white font-medium px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
+            suppressHydrationWarning
+          >
             Kirim
           </button>
         </form>

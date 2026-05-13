@@ -21,6 +21,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Documents: anyone can read, only admin can write
+    match /documents/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Settings (program, tentang): anyone can read, only admin can write
     match /settings/{docId} {
       allow read: if true;

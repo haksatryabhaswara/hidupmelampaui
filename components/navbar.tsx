@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme, useIsClient } from "@/lib/theme";
-import { Sun, Moon, Menu, X, BookOpen, User, LogOut, ChevronDown, Shield, LayoutDashboard } from "lucide-react";
+import Image from "next/image";
+import { Sun, Moon, Menu, X, User, LogOut, ChevronDown, Shield, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/konten", label: "Konten" },
+  { href: "/dokumen", label: "Dokumen" },
   { href: "/program", label: "Program" },
   { href: "/scri", label: "SCRI" },
   { href: "/tentang", label: "Tentang" },
@@ -45,12 +47,21 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-white" />
+            <Image
+              src="https://firebasestorage.googleapis.com/v0/b/hidupmelampaui.firebasestorage.app/o/logo%2Flogo%20saja.jpg?alt=media&token=765576b5-20ee-43fd-af8e-6f4171f9e971"
+              alt="Hidup Melampaui"
+              width={36}
+              height={36}
+              className="rounded-lg object-cover flex-shrink-0"
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-base text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">
+                Hidup Melampaui
+              </span>
+              <span className="text-[10px] text-[var(--muted-foreground)] italic hidden sm:block">
+                Karena hidup tidak sekadar di jalani, tetapi dilampaui.
+              </span>
             </div>
-            <span className="font-bold text-lg text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">
-              Hidup Melampaui
-            </span>
           </Link>
 
           {/* Desktop Nav */}
