@@ -502,7 +502,7 @@ function ScriSection() {
                   <p className="text-white/50 text-[10px] mt-0.5">Pertanyaan</p>
                 </div>
                 <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-center">
-                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>5'</p>
+                  <p className="text-2xl font-black" style={{ color: "#d4a017" }}>5&lsquo;</p>
                   <p className="text-white/50 text-[10px] mt-0.5">Menit</p>
                 </div>
               </div>
