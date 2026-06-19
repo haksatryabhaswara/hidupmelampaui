@@ -14,6 +14,13 @@ import { db } from "@/lib/firebase";
 import { INITIAL_SCORING, type ScriScoring } from "@/lib/scri-data";
 import Link from "next/link";
 import { ChevronLeft, Upload, Pencil, X, Check } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI_PENILAIAN_STEPS: CopilotStep[] = [
+  { id: "info", title: "Info Penilaian", desc: "Referensi: skor maksimal 180 (36 pertanyaan × skala 1–5). Gunakan ini sebagai acuan saat mengatur batas rentang skor." },
+  { id: "scorings", title: "Rentang Penilaian", desc: "Klik 'Edit' pada kartu mana saja untuk mengubah rentang skor, nama label, dan pesan yang ditampilkan kepada pengguna setelah menyelesaikan asesmen." },
+];
 
 export default function AdminScriPenilaianPage() {
   const [scorings, setScorings] = useState<ScriScoring[]>([]);
@@ -139,8 +146,15 @@ export default function AdminScriPenilaianPage() {
         )}
       </div>
 
+      <AdminCopilot
+        pageTitle="Penilaian SCRI-36"
+        steps={SCRI_PENILAIAN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["scri-penilaian"]}
+        storageKey="scri-penilaian"
+      />
+
       {/* Scoring scale reference */}
-      <div className="bg-[var(--muted)]/50 border border-[var(--border)] rounded-xl p-4">
+      <div data-copilot="info" className="bg-[var(--muted)]/50 border border-[var(--border)] rounded-xl p-4">
         <p className="text-xs font-semibold text-[var(--muted-foreground)] mb-1 uppercase tracking-wide">Info Penilaian</p>
         <p className="text-sm text-[var(--foreground)]">
           Total skor maksimal: <strong>180</strong> &nbsp;·&nbsp; Jumlah pertanyaan: <strong>36</strong> &nbsp;·&nbsp;
@@ -148,6 +162,7 @@ export default function AdminScriPenilaianPage() {
         </p>
       </div>
 
+      <div data-copilot="scorings">
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-7 h-7 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -266,6 +281,7 @@ export default function AdminScriPenilaianPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

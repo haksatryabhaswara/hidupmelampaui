@@ -190,7 +190,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Info */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="info" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Informasi Dasar</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -340,7 +340,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* Type & Format */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="format" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Tipe & Format</h2>
 
         <div className="flex gap-3">
@@ -416,7 +416,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* Access & Pricing */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="akses" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Akses & Harga</h2>
 
         <div className="flex flex-wrap gap-3">
@@ -460,7 +460,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
 
       {/* Content Body / Steps / Devotion Entries */}
       {form.isDevotionContent ? (
-        <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <section data-copilot="body" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
           <div>
             <h2 className="font-semibold text-[var(--foreground)]">Isi Renungan Harian</h2>
             <p className="text-sm text-[var(--muted-foreground)] mt-1">
@@ -496,7 +496,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
           })()}
         </section>
       ) : !form.isSteppedContent ? (
-        <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <section data-copilot="body" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
           <h2 className="font-semibold text-[var(--foreground)]">Isi Konten</h2>
           <RichTextEditor
             value={form.body ?? ""}
@@ -506,7 +506,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
           />
         </section>
       ) : (
-        <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <section data-copilot="body" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-[var(--foreground)]">
               Langkah-langkah ({form.steps?.length ?? 0})
@@ -668,7 +668,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       )}
 
       {/* Test Section */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="tes" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-[var(--primary)]" />
@@ -813,7 +813,7 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* Submit */}
-      <div className="flex justify-end gap-3">
+      <div data-copilot="submit" className="flex justify-end gap-3">
         <button
           type="button"
           onClick={() => history.back()}

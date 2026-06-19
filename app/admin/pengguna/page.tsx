@@ -5,6 +5,26 @@ import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Search, Shield, User, ChevronDown } from "lucide-react";
 import type { UserRole } from "@/lib/auth-context";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const PENGGUNA_STEPS: CopilotStep[] = [
+  {
+    id: "header",
+    title: "Manajemen Pengguna",
+    desc: "Halaman ini menampilkan semua akun yang terdaftar di platform. Kamu bisa mencari pengguna dan mengubah peran mereka langsung dari sini.",
+  },
+  {
+    id: "search",
+    title: "Pencarian Pengguna",
+    desc: "Ketik nama atau alamat email untuk menemukan pengguna tertentu dengan cepat.",
+  },
+  {
+    id: "table",
+    title: "Tabel Pengguna & Peran",
+    desc: "Setiap baris menampilkan nama, email, dan tanggal bergabung. Ubah peran pengguna lewat dropdown di kolom Peran — pilih antara 'Pengguna Umum' atau 'Administrator'. Perubahan tersimpan otomatis ke database.",
+  },
+];
 
 interface UserRecord {
   uid: string;
@@ -55,15 +75,22 @@ export default function AdminPenggunaPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Manajemen Pengguna</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{users.length} pengguna terdaftar</p>
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Manajemen Pengguna"
+        steps={PENGGUNA_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.pengguna}
+        storageKey="pengguna"
+      />
+
       {/* Search */}
-      <div className="relative max-w-sm">
+      <div data-copilot="search" className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
         <input
           type="text"
@@ -75,6 +102,7 @@ export default function AdminPenggunaPage() {
       </div>
 
       {/* Table */}
+      <div data-copilot="table">
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -138,6 +166,7 @@ export default function AdminPenggunaPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

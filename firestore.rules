@@ -101,5 +101,12 @@ service cloud.firestore {
       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin();
     }
+
+    // Purchases: users can read/write their own purchase records; admin can read/write all
+    match /purchases/{docId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
   }
 }

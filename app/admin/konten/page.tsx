@@ -28,6 +28,14 @@ import {
   ClipboardList,
   CalendarDays,
 } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const KONTEN_STEPS: CopilotStep[] = [
+  { id: "header", title: "Manajemen Konten", desc: "Kelola semua konten platform. Klik 'Tambah Konten' untuk membuat artikel atau video baru." },
+  { id: "filters", title: "Filter Konten", desc: "Cari berdasarkan judul, pilih kategori, tipe (video/artikel), atau level akses. Filter bisa dikombinasikan." },
+  { id: "table", title: "Daftar Konten", desc: "Setiap baris menampilkan judul, kategori, tipe, akses, dan format. Gunakan ikon clipboard (ungu) untuk melihat jawaban tes, pensil untuk edit, dan tempat sampah untuk hapus." },
+];
 
 const categories = ["Semua", "Pengembangan Diri", "Kepemimpinan", "Spiritual", "Gen Z", "Korporat", "Konseling"];
 const types = ["Semua Tipe", "Video", "Artikel"];
@@ -106,7 +114,7 @@ export default function AdminKontenPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Manajemen Konten</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{contents.length} konten total</p>
@@ -129,8 +137,15 @@ export default function AdminKontenPage() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Manajemen Konten"
+        steps={KONTEN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.konten}
+        storageKey="konten"
+      />
+
       {/* Filters */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+      <div data-copilot="filters" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
           <Filter className="w-4 h-4" /> Filter
         </div>
@@ -174,6 +189,7 @@ export default function AdminKontenPage() {
       </div>
 
       {/* Content Table */}
+      <div data-copilot="table">
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -277,6 +293,7 @@ export default function AdminKontenPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

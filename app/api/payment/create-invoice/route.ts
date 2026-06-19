@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Format: konten_{contentId}_{userId}_{timestamp}
-    const externalId = `konten_${contentId}_${userId}_${Date.now()}`;
+    // Format: HIDUPMELAMPAUI-konten_{contentId}_{userId}_{timestamp}
+    const externalId = `HIDUPMELAMPAUI-konten_${contentId}_${userId}_${Date.now()}`;
 
     const invoice = await createXenditInvoice({
       externalId,
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       description: `Akses Konten: ${contentTitle}`,
       successRedirectUrl: successRedirectUrl ?? `${xenditConfig.baseUrl}/konten/${urlSlug}?payment=success`,
       failureRedirectUrl: failureRedirectUrl ?? `${xenditConfig.baseUrl}/konten/${urlSlug}?payment=failed`,
+      callbackUrl: `${xenditConfig.baseUrl}/api/xendit/webhook`,
     });
 
     return NextResponse.json({

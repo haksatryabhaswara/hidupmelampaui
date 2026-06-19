@@ -4,6 +4,26 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, doc, updateDoc, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Search, Mail, MessageSquare, CheckCircle, Clock, ChevronDown } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const PESAN_STEPS: CopilotStep[] = [
+  {
+    id: "header",
+    title: "Pesan Masuk",
+    desc: "Di sini kamu bisa melihat semua pesan yang dikirim melalui form kontak. Pesan yang belum dibaca ditandai dengan border kuning dan titik warna di sisi kiri kartu.",
+  },
+  {
+    id: "filters",
+    title: "Pencarian & Filter",
+    desc: "Cari pesan berdasarkan nama, email, atau isi pesan. Gunakan filter Topik untuk menyaring kategori, dan filter Status untuk memisahkan pesan yang sudah atau belum dibaca.",
+  },
+  {
+    id: "messages",
+    title: "Daftar Pesan",
+    desc: "Klik baris pesan mana saja untuk membuka isinya. Di dalam, kamu bisa langsung membalas via email, atau menandai pesan sebagai sudah/belum dibaca.",
+  },
+];
 
 interface ContactMessage {
   id: string;
@@ -68,7 +88,7 @@ export default function AdminPesanPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-[var(--foreground)]">Pesan Masuk</h1>
@@ -82,8 +102,15 @@ export default function AdminPesanPage() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Pesan Masuk"
+        steps={PESAN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.pesan}
+        storageKey="pesan"
+      />
+
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
+      <div data-copilot="filters" className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
           <input
@@ -113,6 +140,7 @@ export default function AdminPesanPage() {
       </div>
 
       {/* Messages */}
+      <div data-copilot="messages">
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -215,6 +243,7 @@ export default function AdminPesanPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

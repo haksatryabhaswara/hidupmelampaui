@@ -24,6 +24,14 @@ import {
   Calendar,
   Download,
 } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const JAWABAN_STEPS: CopilotStep[] = [
+  { id: "header", title: "Jawaban Tes", desc: "Daftar semua pengguna yang sudah mengisi tes untuk konten ini. Klik 'Export CSV' untuk mengunduh seluruh jawaban ke spreadsheet." },
+  { id: "stats", title: "Statistik Tes", desc: "Total pengisi, jumlah pertanyaan dalam tes, dan status apakah tes masih aktif." },
+  { id: "answers", title: "Daftar Jawaban", desc: "Klik baris pengguna untuk melihat semua jawaban mereka beserta tipe pertanyaan (esai atau pilihan ganda)." },
+];
 
 function exportToCsv(content: Content, answers: AnswerRecord[]) {
   const questions = content.test?.questions ?? [];
@@ -154,7 +162,7 @@ export default function JawabanKontenPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="space-y-1">
+      <div data-copilot="header" className="space-y-1">
         <Link
           href="/admin/konten"
           className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors mb-2"
@@ -181,8 +189,15 @@ export default function JawabanKontenPage() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Jawaban Tes"
+        steps={JAWABAN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["konten-jawaban"]}
+        storageKey="konten-jawaban"
+      />
+
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div data-copilot="stats" className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
           <p className="text-xs text-[var(--muted-foreground)] mb-1">Total Pengisi</p>
           <p className="text-2xl font-bold text-[var(--foreground)]">{answers.length}</p>
@@ -200,6 +215,7 @@ export default function JawabanKontenPage() {
       </div>
 
       {/* Answers list */}
+      <div data-copilot="answers">
       {answers.length === 0 ? (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-12 text-center text-[var(--muted-foreground)]">
           <ClipboardList className="w-12 h-12 mx-auto opacity-20 mb-3" />
@@ -299,6 +315,7 @@ export default function JawabanKontenPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

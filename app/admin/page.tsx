@@ -5,6 +5,13 @@ import { collection, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { BookOpen, Users, MessageSquare, Layers, Info, ArrowRight } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const DASHBOARD_STEPS: CopilotStep[] = [
+  { id: "stats", title: "Statistik Ringkas", desc: "Tiga kartu menampilkan total konten, pengguna terdaftar, dan pesan masuk. Klik kartu untuk langsung menuju halaman tersebut." },
+  { id: "actions", title: "Aksi Cepat", desc: "Pintasan menuju halaman-halaman utama admin panel: konten, program, tentang, pengguna, dan pesan." },
+];
 
 interface StatCard {
   label: string;
@@ -80,8 +87,15 @@ export default function AdminDashboard() {
         <p className="text-sm text-[var(--muted-foreground)] mt-1">Selamat datang di panel administrasi Hidup Melampaui.</p>
       </div>
 
+      <AdminCopilot
+        pageTitle="Dashboard"
+        steps={DASHBOARD_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.dashboard}
+        storageKey="dashboard"
+      />
+
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div data-copilot="stats" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
@@ -101,7 +115,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div>
+      <div data-copilot="actions">
         <h2 className="text-base font-semibold text-[var(--foreground)] mb-3">Aksi Cepat</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {quickActions.map((action) => {

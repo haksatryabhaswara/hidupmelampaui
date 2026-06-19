@@ -10,6 +10,14 @@ import { db } from "@/lib/firebase";
 import { DIMENSIONS_72 } from "@/lib/scri72-data";
 import Link from "next/link";
 import { ClipboardList, Star, ArrowRight, Users } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI72_MAIN_STEPS: CopilotStep[] = [
+  { id: "cards", title: "Ringkasan SCRI-72", desc: "Tiga kartu akses cepat ke sub-halaman: lihat & kelola Pertanyaan, atur Penilaian, dan buka halaman Hasil pengisian (versi 72 pertanyaan)." },
+  { id: "dimensions", title: "Pertanyaan per Dimensi", desc: "Lihat berapa pertanyaan yang sudah ada per dimensi dari 12 dimensi SCRI-72. Klik baris untuk membuka daftar pertanyaan yang sudah difilter." },
+  { id: "actions", title: "Aksi Cepat", desc: "Tambah pertanyaan baru atau edit pesan penilaian langsung dari sini tanpa harus navigasi sub-menu." },
+];
 
 export default function AdminScri72Page() {
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -57,8 +65,15 @@ export default function AdminScri72Page() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="SCRI-72 Management"
+        steps={SCRI72_MAIN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.scri72}
+        storageKey="scri72"
+      />
+
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div data-copilot="cards" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin/scri72/pertanyaan"
           className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 hover:shadow-md transition-shadow"
@@ -113,7 +128,7 @@ export default function AdminScri72Page() {
       </div>
 
       {/* Per-dimension breakdown */}
-      <div>
+      <div data-copilot="dimensions">
         <h2 className="text-base font-semibold text-[var(--foreground)] mb-3">Pertanyaan per Dimensi</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl divide-y divide-[var(--border)]">
           {DIMENSIONS_72.map((dim) => {
@@ -139,7 +154,7 @@ export default function AdminScri72Page() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div data-copilot="actions" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link
           href="/admin/scri72/pertanyaan/baru"
           className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-violet-400 hover:shadow-sm transition-all group"

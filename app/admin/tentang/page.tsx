@@ -5,6 +5,46 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Save, Check, RotateCcw, Plus, X, Upload } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const TENTANG_STEPS: CopilotStep[] = [
+  {
+    id: "hero",
+    title: "Bagian Hero",
+    desc: "Ubah label kecil dan judul besar yang tampil di bagian atas halaman /tentang. Judul ini adalah kesan pertama pengunjung.",
+  },
+  {
+    id: "narasi",
+    title: "Narasi",
+    desc: "Edit paragraf cerita, daftar poin (bullet), dan unggah foto yang muncul di samping narasi. Pastikan gambar berukuran proporsional (rasio 4:3 atau 16:9).",
+  },
+  {
+    id: "visi-misi",
+    title: "Visi & Misi",
+    desc: "Perbarui pernyataan visi dan item-item misi. Klik '+ Tambah item misi' untuk menambah poin baru, atau ikon × untuk menghapus.",
+  },
+  {
+    id: "pendiri",
+    title: "Profil Pendiri",
+    desc: "Isi nama, jabatan, inisial avatar (maks 3 karakter), dan unggah foto pendiri. Tambah atau hapus tag keahlian dan paragraf bio sesuai kebutuhan.",
+  },
+  {
+    id: "nilai",
+    title: "Nilai-Nilai",
+    desc: "Kelola kartu nilai inti perusahaan. Setiap nilai memiliki judul dan deskripsi singkat. Klik '+ Tambah nilai' untuk menambah kartu baru.",
+  },
+  {
+    id: "dampak",
+    title: "Statistik Dampak",
+    desc: "Perbarui angka-angka dampak (alumni, peserta, organisasi, jam) yang ditampilkan di bagian bawah halaman.",
+  },
+  {
+    id: "simpan",
+    title: "Jangan lupa Simpan",
+    desc: "Setelah selesai mengedit, klik tombol 'Simpan' di atas atau 'Simpan Semua Perubahan' di bawah. Perubahan tidak tersimpan otomatis.",
+  },
+];
 
 interface TentangData {
   heroLabel: string;
@@ -211,7 +251,18 @@ export default function AdminTentangPage() {
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Edit Halaman Tentang</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">Perubahan langsung tampil di halaman /tentang</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {ADMIN_TUTORIALS.tentang && (
+            <a
+              href={ADMIN_TUTORIALS.tentang}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500" aria-hidden><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+              Tutorial
+            </a>
+          )}
           <button
             onClick={() => { if (confirm("Reset ke data default?")) setData(defaultData); }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
@@ -228,8 +279,16 @@ export default function AdminTentangPage() {
         </div>
       </div>
 
+      {/* Copilot */}
+      <AdminCopilot
+        pageTitle="Edit Tentang"
+        steps={TENTANG_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.tentang}
+        storageKey="tentang"
+      />
+
       {/* 1. Hero */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="hero" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Bagian Hero</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -244,7 +303,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* 2. Narasi */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="narasi" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Narasi</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -291,7 +350,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* 3. Visi & Misi */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="visi-misi" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Visi & Misi</h2>
         <div>
           <label className={labelClass}>Visi</label>
@@ -312,7 +371,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* 4. Profil Pendiri */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="pendiri" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Profil Pendiri</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -370,7 +429,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* 5. Nilai-Nilai */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="nilai" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Nilai-Nilai ({data.values.length} Nilai)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.values.map((val, i) => (
@@ -394,7 +453,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* 6. Statistik Dampak */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="dampak" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Statistik Dampak</h2>
         <div>
           <label className={labelClass}>Heading Seksi</label>
@@ -412,7 +471,7 @@ export default function AdminTentangPage() {
       </section>
 
       {/* Bottom Save */}
-      <div className="flex justify-end">
+      <div data-copilot="simpan" className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={saving}

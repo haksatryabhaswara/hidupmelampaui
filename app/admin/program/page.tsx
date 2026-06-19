@@ -5,6 +5,36 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Save, Check, RotateCcw, Upload } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const PROGRAM_STEPS: CopilotStep[] = [
+  {
+    id: "hero",
+    title: "Bagian Hero",
+    desc: "Ubah label kecil (di atas heading) dan judul utama yang tampil di bagian paling atas halaman /program. Gunakan baris baru untuk memisahkan baris judul.",
+  },
+  {
+    id: "sections",
+    title: "Seksi Program",
+    desc: "Setiap seksi mewakili satu kelompok layanan (mis. Individu atau Organisasi). Edit heading, daftar layanan, link CTA, dan unggah gambar untuk masing-masing seksi.",
+  },
+  {
+    id: "ecosystem",
+    title: "Ekosistem & Gerakan",
+    desc: "Edit label dan teks link untuk seksi ekosistem, serta unggah gambar pendukungnya.",
+  },
+  {
+    id: "journey",
+    title: "Kartu Perjalanan",
+    desc: "Tiga kartu yang menggambarkan tahapan perjalanan. Edit heading, teks deskripsi, dan gambar untuk setiap kartu.",
+  },
+  {
+    id: "simpan",
+    title: "Jangan lupa Simpan",
+    desc: "Setelah selesai mengedit, klik tombol 'Simpan' di atas atau 'Simpan Semua Perubahan' di bawah. Perubahan tidak tersimpan otomatis.",
+  },
+];
 
 interface ProgramSection {
   id: string;
@@ -257,8 +287,15 @@ export default function AdminProgramPage() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Edit Program"
+        steps={PROGRAM_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.program}
+        storageKey="program"
+      />
+
       {/* Hero Section */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="hero" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Bagian Hero</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -274,6 +311,7 @@ export default function AdminProgramPage() {
       </section>
 
       {/* Program Sections */}
+      <div data-copilot="sections" className="space-y-6">
       {data.sections.map((section, secIdx) => (
         <section key={section.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
           <h2 className="font-semibold text-[var(--foreground)]">Seksi: {section.label}</h2>
@@ -363,9 +401,10 @@ export default function AdminProgramPage() {
           )}
         </section>
       ))}
+      </div>
 
       {/* Ecosystem */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="ecosystem" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Seksi Ekosistem & Gerakan</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -385,7 +424,7 @@ export default function AdminProgramPage() {
         />
       </section>
 
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="journey" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Kartu Perjalanan (3 Kartu)</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {data.journeyCards.map((card, idx) => (
@@ -411,7 +450,7 @@ export default function AdminProgramPage() {
       </section>
 
       {/* Save Button (bottom) */}
-      <div className="flex justify-end">
+      <div data-copilot="simpan" className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={saving}

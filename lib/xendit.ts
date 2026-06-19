@@ -31,6 +31,7 @@ export async function createXenditInvoice(params: {
   description: string;
   successRedirectUrl: string;
   failureRedirectUrl: string;
+  callbackUrl?: string;
 }): Promise<XenditInvoice> {
   const response = await fetch("https://api.xendit.co/v2/invoices", {
     method: "POST",
@@ -46,6 +47,7 @@ export async function createXenditInvoice(params: {
       success_redirect_url: params.successRedirectUrl,
       failure_redirect_url: params.failureRedirectUrl,
       currency: "IDR",
+      ...(params.callbackUrl ? { callback_url: params.callbackUrl } : {}),
     }),
   });
 

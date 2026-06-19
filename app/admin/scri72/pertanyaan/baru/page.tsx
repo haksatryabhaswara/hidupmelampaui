@@ -7,6 +7,13 @@ import { db } from "@/lib/firebase";
 import { DIMENSIONS_72, type DimensionId72 } from "@/lib/scri72-data";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI72_PERTANYAAN_FORM_STEPS: CopilotStep[] = [
+  { id: "form", title: "Form Pertanyaan", desc: "Pilih dimensi yang tepat dari dropdown, lalu tulis teks pertanyaan dalam format kalimat pernyataan orang pertama (Saya...)." },
+  { id: "scale", title: "Skala Jawaban", desc: "Referensi skala 1–5 yang digunakan pengguna saat menjawab. Tulis pertanyaan agar sesuai dengan kisaran skala ini." },
+];
 
 export default function TambahPertanyaan72Page() {
   const router = useRouter();
@@ -54,8 +61,15 @@ export default function TambahPertanyaan72Page() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Tambah Pertanyaan SCRI-72"
+        steps={SCRI72_PERTANYAAN_FORM_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["scri72-pertanyaan-form"]}
+        storageKey="scri72-pertanyaan-baru"
+      />
+
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
+        <div data-copilot="form" className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
           {/* Dimension */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--foreground)]">Dimensi</label>
@@ -88,7 +102,7 @@ export default function TambahPertanyaan72Page() {
         </div>
 
         {/* Answer scale reference */}
-        <div className="bg-[var(--muted)]/50 border border-[var(--border)] rounded-xl p-4">
+        <div data-copilot="scale" className="bg-[var(--muted)]/50 border border-[var(--border)] rounded-xl p-4">
           <p className="text-xs font-semibold text-[var(--muted-foreground)] mb-2 uppercase tracking-wide">Skala Jawaban</p>
           <div className="flex flex-wrap gap-2">
             {[

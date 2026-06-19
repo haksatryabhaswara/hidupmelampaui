@@ -11,6 +11,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -88,6 +89,12 @@ function Scri72PageContent() {
   useEffect(() => {
     if (searchParams?.get("payment") === "success" && user) {
       setHasPurchased(true);
+      // Persist to Firestore so access survives page refresh
+      void setDoc(
+        doc(db, "purchases", `${user.uid}_scri72`),
+        { userId: user.uid, contentId: "scri72", status: "paid", paidAt: new Date().toISOString() },
+        { merge: true },
+      );
     }
   }, [searchParams, user]);
 

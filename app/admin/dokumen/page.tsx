@@ -26,6 +26,26 @@ import {
   FileType,
   Presentation,
 } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const DOKUMEN_STEPS: CopilotStep[] = [
+  {
+    id: "header",
+    title: "Manajemen Dokumen",
+    desc: "Di sini kamu bisa mengelola semua dokumen yang bisa diunduh pengguna. Klik tombol 'Tambah Dokumen' di kanan atas untuk mengunggah dokumen baru.",
+  },
+  {
+    id: "filters",
+    title: "Pencarian & Filter",
+    desc: "Cari dokumen berdasarkan judul atau kategori. Gunakan tombol pill untuk memfilter berdasarkan kategori konten, atau pilih jenis akses: Gratis, Login, atau Berbayar.",
+  },
+  {
+    id: "table",
+    title: "Daftar Dokumen",
+    desc: "Setiap baris menampilkan judul, kategori, tipe file, ukuran, dan level akses dokumen. Gunakan ikon pensil untuk mengedit, atau ikon tempat sampah untuk menghapus dokumen secara permanen.",
+  },
+];
 
 const accessOptions = ["Semua Akses", "Gratis", "Login", "Berbayar"];
 const categoryOptions = ["Semua", ...DOKUMEN_CATEGORIES];
@@ -117,7 +137,7 @@ export default function AdminDokumenPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Dokumen</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
@@ -133,8 +153,15 @@ export default function AdminDokumenPage() {
         </Link>
       </div>
 
+      <AdminCopilot
+        pageTitle="Dokumen"
+        steps={DOKUMEN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS.dokumen}
+        storageKey="dokumen"
+      />
+
       {/* Filters */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+      <div data-copilot="filters" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
           <input
@@ -181,7 +208,7 @@ export default function AdminDokumenPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+      <div data-copilot="table" className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />

@@ -7,6 +7,12 @@ import { db } from "@/lib/firebase";
 import { DIMENSIONS, type DimensionId, type ScriQuestion } from "@/lib/scri-data";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI_PERTANYAAN_EDIT_STEPS: CopilotStep[] = [
+  { id: "form", title: "Edit Pertanyaan", desc: "Ubah dimensi atau teks pertanyaan. Klik 'Simpan Perubahan' saat selesai. Untuk mengubah urutan, gunakan drag-and-drop di halaman daftar pertanyaan." },
+];
 
 export default function EditPertanyaanPage() {
   const router = useRouter();
@@ -81,8 +87,15 @@ export default function EditPertanyaanPage() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Edit Pertanyaan SCRI-36"
+        steps={SCRI_PERTANYAAN_EDIT_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["scri-pertanyaan-form"]}
+        storageKey="scri-pertanyaan-edit"
+      />
+
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
+        <div data-copilot="form" className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
           {/* Dimension */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--foreground)]">Dimensi</label>

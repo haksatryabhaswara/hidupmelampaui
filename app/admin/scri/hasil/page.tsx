@@ -14,6 +14,14 @@ import {
   User,
   Calendar,
 } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI_HASIL_STEPS: CopilotStep[] = [
+  { id: "header", title: "Hasil SCRI-36", desc: "Semua hasil pengisian ditampilkan di sini. Klik tombol 'Export CSV' untuk mengunduh seluruh data ke spreadsheet." },
+  { id: "stats", title: "Statistik Ringkas", desc: "Total pengisi, rata-rata skor, dan skor maksimal (180). Data diperbarui setiap halaman dimuat." },
+  { id: "results", title: "Daftar Hasil", desc: "Klik baris mana saja untuk melihat detail: skor per dimensi dalam bentuk progress bar, label tahap, dan pesan hasil yang diterima pengguna." },
+];
 
 interface ScriResult {
   id: string;
@@ -121,7 +129,7 @@ export default function AdminScri36HasilPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-start justify-between flex-wrap gap-3">
         <div className="space-y-1">
           <Link
             href="/admin/scri"
@@ -145,8 +153,15 @@ export default function AdminScri36HasilPage() {
         )}
       </div>
 
+      <AdminCopilot
+        pageTitle="Hasil SCRI-36"
+        steps={SCRI_HASIL_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["scri-hasil"]}
+        storageKey="scri-hasil"
+      />
+
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div data-copilot="stats" className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
           <p className="text-xs text-[var(--muted-foreground)] mb-1">Total Pengisi</p>
           <p className="text-2xl font-bold text-[var(--foreground)]">{loading ? "—" : results.length}</p>
@@ -162,6 +177,7 @@ export default function AdminScri36HasilPage() {
       </div>
 
       {/* Results list */}
+      <div data-copilot="results">
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -264,6 +280,7 @@ export default function AdminScri36HasilPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

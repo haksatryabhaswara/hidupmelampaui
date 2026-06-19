@@ -7,6 +7,14 @@ import { DIMENSIONS, type ScriQuestion } from "@/lib/scri-data";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, Search, Edit, Trash2, Filter, ClipboardList, GripVertical } from "lucide-react";
+import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
+import { ADMIN_TUTORIALS } from "@/lib/links";
+
+const SCRI_PERTANYAAN_STEPS: CopilotStep[] = [
+  { id: "header", title: "Daftar Pertanyaan SCRI-36", desc: "Kelola semua pertanyaan SCRI-36, dikelompokkan per dimensi. Klik 'Tambah Pertanyaan' untuk menambahkan pertanyaan baru." },
+  { id: "filters", title: "Cari & Filter Dimensi", desc: "Cari pertanyaan berdasarkan teks, atau gunakan dropdown untuk memfilter satu dimensi saja. Filter dimensi juga mengaktifkan fitur drag-to-reorder." },
+  { id: "list", title: "Daftar & Urutan Pertanyaan", desc: "Saat memfilter satu dimensi, seret baris untuk mengubah urutan (tersimpan otomatis). Klik ikon pensil untuk edit, atau tempat sampah untuk hapus pertanyaan." },
+];
 
 function QuestionList() {
   const searchParams = useSearchParams();
@@ -102,7 +110,7 @@ function QuestionList() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div data-copilot="header" className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Pertanyaan SCRI-36</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
@@ -126,8 +134,15 @@ function QuestionList() {
         </div>
       </div>
 
+      <AdminCopilot
+        pageTitle="Pertanyaan SCRI-36"
+        steps={SCRI_PERTANYAAN_STEPS}
+        youtubeUrl={ADMIN_TUTORIALS["scri-pertanyaan"]}
+        storageKey="scri-pertanyaan"
+      />
+
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div data-copilot="filters" className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
           <input
@@ -155,6 +170,7 @@ function QuestionList() {
         </div>
       </div>
 
+      <div data-copilot="list" className="space-y-6">
       {/* Hint & count */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-[var(--muted-foreground)]">
@@ -241,6 +257,7 @@ function QuestionList() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

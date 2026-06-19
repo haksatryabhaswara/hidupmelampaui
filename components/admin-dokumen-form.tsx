@@ -129,7 +129,7 @@ export function DokumenForm({ initial = {}, onSubmit, submitting, submitLabel }:
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Info */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="info" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Informasi Dokumen</h2>
 
         <div>
@@ -169,7 +169,7 @@ export function DokumenForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* Access */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="akses" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Hak Akses</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -211,7 +211,7 @@ export function DokumenForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* File Upload */}
-      <section className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+      <section data-copilot="file" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">File Dokumen</h2>
         <p className="text-xs text-[var(--muted-foreground)]">
           Format yang didukung: PDF, Word (.doc, .docx), PowerPoint (.ppt, .pptx). Maksimal 50 MB.
@@ -283,7 +283,7 @@ export function DokumenForm({ initial = {}, onSubmit, submitting, submitLabel }:
       </section>
 
       {/* Submit */}
-      <div className="flex justify-end gap-3">
+      <div data-copilot="submit" className="flex justify-end gap-3">
         <button
           type="button"
           onClick={() => window.history.back()}

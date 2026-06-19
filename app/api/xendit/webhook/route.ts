@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    // external_id format: konten_{contentId}_{userId}_{timestamp}
+    // external_id format: HIDUPMELAMPAUI-konten_{contentId}_{userId}_{timestamp}
     const parts = external_id.split("_");
-    if (parts[0] === "konten" && parts.length >= 4) {
+    if (parts[0] === "HIDUPMELAMPAUI-konten" && parts.length >= 4) {
       const contentId = parts[1];
       const userId = parts[2];
 
