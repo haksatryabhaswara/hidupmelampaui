@@ -10,12 +10,12 @@ import { AdminCopilot, CopilotStep } from "@/components/admin-copilot";
 import { ADMIN_TUTORIALS } from "@/lib/links";
 
 const KONTEN_FORM_STEPS: CopilotStep[] = [
-  { id: "info", title: "Informasi Dasar", desc: "Isi judul (slug otomatis terisi), deskripsi, gambar cover, kategori, instruktur, dan durasi konten." },
-  { id: "format", title: "Tipe & Format", desc: "Pilih tipe: Video atau Artikel. Pilih format: Tunggal (satu halaman), Berlangkah (beberapa modul), atau Renungan Harian (dibagi per hari dengan heading H1)." },
-  { id: "akses", title: "Akses & Harga", desc: "Tentukan siapa yang bisa mengakses: Gratis, Wajib Login, atau Berbayar (isi harga jika berbayar)." },
-  { id: "body", title: "Isi Konten", desc: "Tulis atau susun isi konten. Jika berlangkah: tambah langkah-langkah dan atur akses per langkah. Jika renungan: gunakan H1 untuk setiap hari." },
-  { id: "tes", title: "Tes Konten", desc: "Opsional: aktifkan tes dan tambah pertanyaan esai atau pilihan ganda. Jawaban pengguna bisa diexport dari halaman Jawaban Tes." },
-  { id: "submit", title: "Simpan Konten", desc: "Pastikan semua field wajib terisi sebelum klik simpan. Slug harus unik antar konten." },
+  { id: "info", title: "Informasi Dasar", desc: "Isi judul (slug otomatis terisi dari judul), deskripsi singkat, gambar cover (drag & drop atau klik area), kategori, instruktur, dan estimasi durasi konten." },
+  { id: "format", title: "Tipe & Format", desc: "Tipe — Video: butuh YouTube Video ID (bukan URL penuh, ambil dari akhir URL setelah ?v= atau youtu.be/). Artikel: editor rich text. Format — Tunggal: 1 halaman. Berlangkah: beberapa modul berurutan, akses bisa beda tiap modul. Renungan Harian: pisahkan hari dengan heading H1." },
+  { id: "akses", title: "Akses & Harga", desc: "Gratis: siapa saja bisa akses tanpa login. Wajib Login: gratis tapi perlu akun (data pengguna tercatat). Berbayar: isi nominal IDR — pengguna harus membeli sebelum bisa melihat konten." },
+  { id: "body", title: "Isi Konten", desc: "Tunggal/Artikel: tulis langsung di editor. Berlangkah: tambah tiap modul, atur tipe & akses per modul. Renungan Harian: gunakan heading H1 sebagai pemisah hari — sistem otomatis menghitung dan memisahkan per hari." },
+  { id: "tes", title: "Tes Konten", desc: "Opsional — aktifkan toggle lalu tambah pertanyaan. Esai: jawaban teks bebas dari pengguna. Pilihan Ganda: opsi a–e, admin bisa lihat jawaban dari halaman Jawaban Tes dan mengekspornya." },
+  { id: "submit", title: "Simpan Konten", desc: "Pastikan judul, slug (harus unik antar konten), deskripsi, dan semua field wajib (*) sudah terisi. Klik 'Simpan Konten' — konten langsung aktif dan bisa diakses pengguna sesuai pengaturan akses." },
 ];
 
 export default function KontenBaruPage() {

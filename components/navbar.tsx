@@ -52,7 +52,7 @@ export function Navbar() {
               alt="Hidup Melampaui"
               width={36}
               height={36}
-              className="rounded-lg object-cover flex-shrink-0"
+              className="rounded-lg object-cover flex-shrink-0 w-9 h-9"
             />
             <div className="flex flex-col leading-tight">
               <span className="font-bold text-base text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">

@@ -1136,6 +1136,7 @@ function KonselingSection() {
                   />
                 </div>
                 <button
+                  suppressHydrationWarning
                   type="submit"
                   disabled={submitting}
                   className="w-full bg-[var(--primary)] text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"

@@ -71,7 +71,7 @@ export default function DaftarPage() {
               alt="Hidup Melampaui"
               width={56}
               height={56}
-              className="rounded-xl object-cover"
+              className="rounded-xl object-cover w-14 h-14"
             />
           </div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Bergabung Sekarang</h1>

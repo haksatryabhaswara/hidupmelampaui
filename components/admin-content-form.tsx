@@ -343,22 +343,33 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
       <section data-copilot="format" className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
         <h2 className="font-semibold text-[var(--foreground)]">Tipe & Format</h2>
 
-        <div className="flex gap-3">
-          {(["video", "article"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => set("type", t)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                form.type === t
-                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-              }`}
-            >
-              {t === "video" ? <Video className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-              {t === "video" ? "Video" : "Artikel"}
-            </button>
-          ))}
+        <div>
+          <label className={labelClass}>Tipe Konten</label>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { v: "video" as const, icon: Video, label: "Video", desc: "Berbasis video YouTube. Isi Video ID setelah memilih — bukan URL lengkap." },
+              { v: "article" as const, icon: FileText, label: "Artikel", desc: "Berbasis teks dengan editor rich text. Bisa menambahkan gambar, heading, dan format lainnya." },
+            ]).map(({ v, icon: Icon, label, desc }) => {
+              const active = form.type === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => set("type", v)}
+                  className={`flex flex-col items-start gap-1.5 p-4 rounded-xl border text-left transition-colors ${
+                    active
+                      ? "border-[var(--primary)] bg-[var(--primary)]/10"
+                      : "border-[var(--border)] hover:bg-[var(--muted)] hover:border-[var(--primary)]/30"
+                  }`}
+                >
+                  <span className={`flex items-center gap-2 text-sm font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                    <Icon className="w-4 h-4" /> {label}
+                  </span>
+                  <span className="text-xs text-[var(--muted-foreground)] leading-relaxed">{desc}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {form.type === "video" && (
@@ -371,46 +382,36 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
               className={inputClass}
               placeholder="inpok4MKVLM"
             />
-            <p className="text-xs text-[var(--muted-foreground)] mt-1">ID saja, bukan URL penuh.</p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Ambil dari URL: youtube.com/watch?v=<strong>inpok4MKVLM</strong> atau youtu.be/<strong>inpok4MKVLM</strong>
+            </p>
           </div>
         )}
 
         <div>
           <label className={labelClass}>Format Konten</label>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: false }))}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                !form.isSteppedContent && !form.isDevotionContent
-                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-              }`}
-            >
-              <FileText className="w-4 h-4" /> Konten Tunggal
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: true, isDevotionContent: false }))}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                form.isSteppedContent && !form.isDevotionContent
-                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-              }`}
-            >
-              <Layers className="w-4 h-4" /> Berlangkah (Multi-step)
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: true }))}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                form.isDevotionContent
-                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                  : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-              }`}
-            >
-              <CalendarDays className="w-4 h-4" /> Renungan Harian
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {([
+              { icon: FileText, label: "Konten Tunggal", desc: "Satu halaman konten. Cocok untuk video singkat atau artikel yang bisa dikonsumsi sekaligus.", active: !form.isSteppedContent && !form.isDevotionContent, onClick: () => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: false })) },
+              { icon: Layers, label: "Berlangkah", desc: "Beberapa modul berurutan. Akses tiap modul bisa diatur tersendiri. Cocok untuk kursus bertahap.", active: form.isSteppedContent && !form.isDevotionContent, onClick: () => setForm((prev) => ({ ...prev, isSteppedContent: true, isDevotionContent: false })) },
+              { icon: CalendarDays, label: "Renungan Harian", desc: "Dibagi per hari via heading H1. Cocok untuk program 7 hari, 30 hari, atau renungan berkala.", active: form.isDevotionContent, onClick: () => setForm((prev) => ({ ...prev, isSteppedContent: false, isDevotionContent: true })) },
+            ]).map(({ icon: Icon, label, desc, active, onClick }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={onClick}
+                className={`flex flex-col items-start gap-1.5 p-4 rounded-xl border text-left transition-colors ${
+                  active
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10"
+                    : "border-[var(--border)] hover:bg-[var(--muted)] hover:border-[var(--primary)]/30"
+                }`}
+              >
+                <span className={`flex items-center gap-2 text-sm font-semibold ${active ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                  <Icon className="w-4 h-4" /> {label}
+                </span>
+                <span className="text-xs text-[var(--muted-foreground)] leading-relaxed">{desc}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -439,6 +440,16 @@ export function ContentForm({ initial = {}, onSubmit, submitting, submitLabel }:
               {label}
             </button>
           ))}
+        </div>
+
+        <div className="rounded-lg bg-[var(--muted)]/50 border border-[var(--border)] px-3 py-2.5 text-xs text-[var(--muted-foreground)] leading-relaxed">
+          {form.access === "free" ? (
+            <><span className="text-emerald-600 dark:text-emerald-400 font-semibold">Gratis:</span> Semua pengunjung dapat mengakses konten ini tanpa perlu akun maupun pembayaran. Konten tampil penuh di halaman publik.</>
+          ) : form.access === "login" ? (
+            <><span className="text-blue-600 dark:text-blue-400 font-semibold">Wajib Login:</span> Pengunjung harus membuat akun dan login terlebih dahulu. Konten tidak berbayar, tapi data pengguna tercatat di sistem. Cocok untuk konten eksklusif komunitas atau yang membutuhkan progress tracking.</>
+          ) : (
+            <><span className="text-amber-600 dark:text-amber-400 font-semibold">Berbayar:</span> Pengguna harus membeli akses sebelum bisa melihat konten. Isi nominal harga dalam IDR di bawah. Pembayaran diproses melalui sistem yang terhubung dengan akun pengguna.</>
+          )}
         </div>
 
         {form.access === "paid" && (
